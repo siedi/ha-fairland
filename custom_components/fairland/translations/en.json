@@ -1,0 +1,32 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "data": {
+          "accountName": "Account E-Mail",
+          "password": "Password",
+          "countryCode": "Country Code"
+        },
+        "description": "Enter your Fairland credentials",
+        "title": "Fairland Account Setup"
+      },
+      "courtyard": {
+        "data": {
+          "courtyard_id": "Select Courtyard"
+        },
+        "description": "Select the courtyard you want to add for {username}",
+        "title": "Select Courtyard"
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to the Fairland API",
+      "invalid_auth": "Invalid authentication",
+      "cannot_get_courtyards": "Failed to retrieve available courtyards",
+      "unknown": "Unexpected error"
+    },
+    "abort": {
+      "already_configured": "Account is already configured",
+      "no_courtyards": "No courtyards found for this account"
+    }
+  }
+}
