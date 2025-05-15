@@ -132,6 +132,9 @@ class FairlandClimate(FairlandEntity, ClimateEntity):
             sw_version=device_info.get("version", "Unknown"),
         )
 
+        # Initialize the values
+        self._update_state()
+
     def _setup_preset_modes(self):
         """Set up preset modes from the device data."""
         running_mode_dp = self._index_data.get("102")
@@ -184,57 +187,63 @@ class FairlandClimate(FairlandEntity, ClimateEntity):
     async def async_added_to_hass(self) -> None:
         """When entity is added to hass."""
         self.async_on_remove(
-            self.coordinator.async_add_listener(self.async_write_ha_state)
+            self.coordinator.async_add_listener(self._handle_coordinator_update)
         )
 
-    async def async_update(self) -> None:
-        """Update entity state from the coordinator."""
+    def _handle_coordinator_update(self) -> None:
+        """Handle updated data from the coordinator."""
         # Find our device in the coordinator data
         for device in self.coordinator.data:
             if device["id"] == self._device_id:
-                # Aktualisiere device_info mit den neuesten Daten
                 self._device_info = device
-                device_status = device.get("dps", [])
+                self._update_state()
+                self.async_write_ha_state()
+                break
 
-                # Update our stored data based on the response
-                for dp in device_status:
-                    dp_id = dp["dpId"]
-                    value = dp["dpValue"]
+    async def async_update(self) -> None:
+        """Update the entity."""
+        # The coordinator handles the updates
+        await self.coordinator.async_request_refresh()
 
-                    if dp_id == "101":  # Power switch
-                        self._is_on = value
-                        if not self._is_on:
-                            self._attr_hvac_mode = HVACMode.OFF
-                            self._attr_hvac_action = HVACAction.OFF
+    def _update_state(self) -> None:
+        """Update entity state from the coordinator."""
+        if "dps" in self._device_info:
+            for dp in self._device_info["dps"]:
+                dp_id = dp["dpId"]
+                value = dp["dpValue"]
 
-                    elif dp_id == "102":  # Running mode
-                        mode_name = self._preset_modes_map.get(value)
-                        if mode_name:
-                            self._attr_preset_mode = mode_name
+                if dp_id == "101":  # Power switch
+                    self._is_on = value
+                    if not self._is_on:
+                        self._attr_hvac_mode = HVACMode.OFF
+                        self._attr_hvac_action = HVACAction.OFF
 
-                    elif dp_id == "106":  # Operating mode
-                        if self._is_on:
-                            self._attr_hvac_mode = HVAC_MODE_MAP.get(
-                                value, HVACMode.OFF
-                            )
+                elif dp_id == "102":  # Running mode
+                    mode_name = self._preset_modes_map.get(value)
+                    if mode_name:
+                        self._attr_preset_mode = mode_name
 
-                    elif dp_id == "103":  # Current temperature
-                        self._attr_current_temperature = value
+                elif dp_id == "106":  # Operating mode
+                    if self._is_on:
+                        self._attr_hvac_mode = HVAC_MODE_MAP.get(value, HVACMode.OFF)
 
-                    elif dp_id == "107":  # Target temperature
-                        self._attr_target_temperature = value
+                elif dp_id == "103":  # Current temperature
+                    self._attr_current_temperature = value
 
-                    elif dp_id == "113":  # Operating status
-                        # 0: standby, 1: operating
-                        if value == 1 and self._is_on:
-                            if self._attr_hvac_mode == HVACMode.HEAT:
-                                self._attr_hvac_action = HVACAction.HEATING
-                            elif self._attr_hvac_mode == HVACMode.COOL:
-                                self._attr_hvac_action = HVACAction.COOLING
-                            else:
-                                self._attr_hvac_action = HVACAction.IDLE
+                elif dp_id == "107":  # Target temperature
+                    self._attr_target_temperature = value
+
+                elif dp_id == "113":  # Operating status
+                    # 0: standby, 1: operating
+                    if value == 1 and self._is_on:
+                        if self._attr_hvac_mode == HVACMode.HEAT:
+                            self._attr_hvac_action = HVACAction.HEATING
+                        elif self._attr_hvac_mode == HVACMode.COOL:
+                            self._attr_hvac_action = HVACAction.COOLING
                         else:
                             self._attr_hvac_action = HVACAction.IDLE
+                    else:
+                        self._attr_hvac_action = HVACAction.IDLE
 
     async def async_set_preset_mode(self, preset_mode):
         """Set new preset mode."""
@@ -298,7 +307,7 @@ class FairlandClimate(FairlandEntity, ClimateEntity):
     async def async_turn_on(self):
         """Turn the entity on."""
         try:
-            await self.coordinator.config_entry.runtime_data.client.set_device_statuss(
+            await self.coordinator.config_entry.runtime_data.client.set_device_status(
                 self._device_id,
                 "101",  # Power switch data point
                 True,

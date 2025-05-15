@@ -385,6 +385,7 @@ class FairlandSensor(FairlandEntity, SensorEntity):
                 self._attr_available = True
                 return
 
+            # ist die logik nicht doppelt?!?!
             for dp in self._device_info["dps"]:
                 if dp["dpId"] == self._dp_id:
                     value = dp["dpValue"]
