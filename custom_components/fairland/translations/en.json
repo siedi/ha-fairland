@@ -5,14 +5,16 @@
         "data": {
           "accountName": "Account E-Mail",
           "password": "Password",
-          "countryCode": "Country Code"
+          "countryCode": "Country Code",
+          "scan_interval": "Scan Interval (seconds)"
         },
         "description": "Enter your Fairland credentials",
         "title": "Fairland Account Setup"
       },
       "courtyard": {
         "data": {
-          "courtyard_id": "Select Courtyard"
+          "courtyard_id": "Select Courtyard",
+          "courtyard": "Courtyards"
         },
         "description": "Select the courtyard you want to add for {username}",
         "title": "Select Courtyard"

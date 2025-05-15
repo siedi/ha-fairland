@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from .data import FairlandConfigEntry
 
 
-from .const import DOMAIN, LOGGER, SCAN_INTERVAL
+from .const import DOMAIN, LOGGER
 
 
 class FairlandDataUpdateCoordinator(DataUpdateCoordinator):
@@ -31,12 +31,13 @@ class FairlandDataUpdateCoordinator(DataUpdateCoordinator):
     ) -> None:
         """Initialize the coordinator."""
         self.device_ids = {}
+        scan_interval = config_entry.data.get("scan_interval", 30)
         super().__init__(
             hass,
             logger=LOGGER,
             name=DOMAIN,
             config_entry=config_entry,
-            update_interval=timedelta(seconds=SCAN_INTERVAL),
+            update_interval=timedelta(seconds=scan_interval),
         )
 
     async def _async_update_data(self):

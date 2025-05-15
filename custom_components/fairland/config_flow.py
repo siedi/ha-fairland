@@ -15,13 +15,14 @@ from .api import (
     FairlandApiClientCommunicationError,
     FairlandApiClientError,
 )
-from .const import DOMAIN, LOGGER
+from .const import DEFAULT_SCAN_INTERVAL, DOMAIN, LOGGER
 
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {
         vol.Required("accountName"): cv.string,
         vol.Required("password"): cv.string,
         vol.Required("countryCode", default="DE"): cv.string,
+        vol.Required("scan_interval", default=DEFAULT_SCAN_INTERVAL): cv.positive_int,
     }
 )
 
@@ -37,6 +38,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self.username = None
         self.password = None
         self.country_code = None
+        self.scan_interval = None
         self.courtyards = None
         self.selected_courtyard = None
         self.devices = None
@@ -52,6 +54,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self.username = user_input["accountName"]
             self.password = user_input["password"]
             self.country_code = user_input["countryCode"]
+            self.scan_interval = user_input["scan_interval"]
 
             try:
                 self.apiClient = FairlandApiClient(
@@ -74,17 +77,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 LOGGER.exception(exception)
                 _errors["base"] = "unknown"
             else:
-                # Store API in hass.data for use in other steps
-                # self.hass.data.setdefault(DOMAIN, {})
-                # self.hass.data[DOMAIN]["api"] = self.apiClient
-
                 # If successful, move to the next step
                 return await self.async_step_courtyard()
-
-                # return self.async_create_entry(
-                #    title=user_input["accountName"],
-                #    data=user_input,
-                # )
 
         return self.async_show_form(
             step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=_errors
@@ -133,6 +127,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         "username": self.username,
                         "password": self.password,
                         "countryCode": self.country_code,
+                        "scan_interval": self.scan_interval,
                         "courtyard_id": selected_courtyard_id,
                         "courtyard_name": selected_courtyard["name"],
                         "devices": self.devices,
