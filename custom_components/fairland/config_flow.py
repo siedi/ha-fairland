@@ -26,6 +26,12 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
     }
 )
 
+STEP_RECONFIGURE_SCHEMA = vol.Schema(
+    {
+        vol.Required("scan_interval", default=DEFAULT_SCAN_INTERVAL): cv.positive_int,
+    }
+)
+
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Fairland."""
@@ -149,6 +155,49 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             ),
             errors=_errors,
             description_placeholders={"username": self.username},
+        )
+
+    async def async_step_reconfigure(
+        self, user_input: dict | None = None
+    ) -> config_entries.ConfigFlowResult:
+        """Handle reconfiguration by the user."""
+        _errors = {}
+
+        # Get the entry using the standard method
+        entry = self._get_reconfigure_entry()
+
+        # Abort if the unique ID doesn't match
+        self._abort_if_unique_id_configured()
+
+        if user_input is not None:
+            # Update scan interval
+            new_data = {
+                **entry.data,
+                "scan_interval": user_input["scan_interval"],
+            }
+
+            # Update the config entry and reload the integration
+            return self.async_update_reload_and_abort(
+                entry, data=new_data, reason="reconfigure_successful"
+            )
+
+        # Prepare schema with current values
+        current_scan_interval = entry.data.get("scan_interval", DEFAULT_SCAN_INTERVAL)
+
+        # Show form with current values as defaults
+        schema = vol.Schema(
+            {
+                vol.Required(
+                    "scan_interval", default=current_scan_interval
+                ): cv.positive_int,
+            }
+        )
+
+        return self.async_show_form(
+            step_id="reconfigure",
+            data_schema=schema,
+            errors=_errors,
+            description_placeholders={"device_name": entry.title},
         )
 
 

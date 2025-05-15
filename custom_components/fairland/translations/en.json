@@ -18,6 +18,13 @@
         },
         "description": "Select the courtyard you want to add for {username}",
         "title": "Select Courtyard"
+      },
+      "reconfigure": {
+        "data": {
+          "scan_interval": "Scan Interval (seconds)"
+        },
+        "description": "Update the scan interval for {device_name}",
+        "title": "Reconfigure Fairland"
       }
     },
     "error": {
@@ -28,7 +35,8 @@
     },
     "abort": {
       "already_configured": "Account is already configured",
-      "no_courtyards": "No courtyards found for this account"
+      "no_courtyards": "No courtyards found for this account",
+      "reconfigure_successful": "Reconfiguration successful"
     }
   }
 }
