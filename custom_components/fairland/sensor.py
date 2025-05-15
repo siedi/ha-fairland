@@ -290,7 +290,7 @@ async def async_setup_entry(
                             if "scale" in prop:
                                 sensor_config = sensor_config.copy()
                                 sensor_config["scale"] = int(prop["scale"])
-                        except Exception as ex:
+                        except (json.JSONDecodeError, KeyError, ValueError) as ex:
                             LOGGER.warning(
                                 "Failed to parse dpProperty for power sensor: %s", ex
                             )

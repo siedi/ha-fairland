@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any
 from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
 from homeassistant.helpers.entity import DeviceInfo
 
+from .api import FairlandApiClientCommunicationError, FairlandApiClientError
 from .const import DOMAIN, LOGGER
 from .entity import FairlandEntity
 
@@ -148,7 +149,7 @@ class FairlandSwitch(FairlandEntity, SwitchEntity):
 
             # Request a refresh to get the updated state
             await self.coordinator.async_request_refresh()
-        except Exception as ex:
+        except (FairlandApiClientCommunicationError, FairlandApiClientError) as ex:
             LOGGER.error("Error turning on switch: %s", ex)
 
     async def async_turn_off(self, **kwargs) -> None:
@@ -164,5 +165,5 @@ class FairlandSwitch(FairlandEntity, SwitchEntity):
 
             # Request a refresh to get the updated state
             await self.coordinator.async_request_refresh()
-        except Exception as ex:
+        except (FairlandApiClientCommunicationError, FairlandApiClientError) as ex:
             LOGGER.error("Error turning off switch: %s", ex)

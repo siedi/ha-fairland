@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
+import asyncio
 import socket
 from typing import Any
 
 import aiohttp
-import async_timeout
 
 from .const import LOGGER
 
@@ -61,7 +61,7 @@ class FairlandApiClient:
     def _get_headers(self):
         """Get headers for API requests."""
         if not self.token:
-            raise Exception("Not logged in")
+            raise FairlandApiClientAuthenticationError("Not logged in")
 
         return {
             "Content-Type": "application/json",
@@ -83,7 +83,7 @@ class FairlandApiClient:
             headers = self._get_headers()
 
         try:
-            async with async_timeout.timeout(10):
+            async with asyncio.timeout(10):
                 response = await self._session.request(
                     method=method,
                     url=url,
@@ -145,8 +145,12 @@ class FairlandApiClient:
             "Accept": "application/json;charset=UTF-8",
         }
 
+        def _handle_login_response_error(code, msg):
+            """Handle login response error."""
+            raise FairlandApiClientAuthenticationError(f"Login failed: {code} {msg}")
+
         try:
-            async with async_timeout.timeout(10):
+            async with asyncio.timeout(10):
                 response = await self._session.request(
                     method="post",
                     url=url,
@@ -154,14 +158,14 @@ class FairlandApiClient:
                     json=payload,
                 )
                 if response.status != 200:
-                    raise Exception(
-                        f"Failed to login: {response.status_code} {response.text}"
+                    _handle_login_response_error(
+                        {response.status_code}, {response.text}
                     )
 
                 data = await response.json()
 
                 if data["code"] != 200000:
-                    raise Exception(f"Login failed: {data['code']} {data['msg']}")
+                    _handle_login_response_error({data["code"]}, {data["msg"]})
 
                 self.token = data["data"]["authorization"]
                 self.user_id = data["data"]["userId"]

@@ -13,6 +13,7 @@ from homeassistant.components.climate import (
 from homeassistant.const import ATTR_TEMPERATURE, PRECISION_WHOLE, UnitOfTemperature
 from homeassistant.helpers.entity import DeviceInfo
 
+from .api import FairlandApiClientCommunicationError, FairlandApiClientError
 from .const import DOMAIN, LOGGER
 from .entity import FairlandEntity
 
@@ -153,7 +154,7 @@ class FairlandClimate(FairlandEntity, ClimateEntity):
                 self._preset_modes_reverse_map[name] = int(value)
 
             LOGGER.debug(f"Set up preset modes: {self._preset_modes_map}")
-        except Exception as ex:
+        except (json.JSONDecodeError, KeyError, ValueError) as ex:
             LOGGER.error(f"Error setting up preset modes: {ex}")
 
     def _get_switch_state(self):
@@ -250,7 +251,7 @@ class FairlandClimate(FairlandEntity, ClimateEntity):
                 self._attr_preset_mode = preset_mode
             else:
                 LOGGER.error(f"Unknown preset mode: {preset_mode}")
-        except Exception as ex:
+        except (FairlandApiClientCommunicationError, FairlandApiClientError) as ex:
             LOGGER.error(f"Error setting preset mode: {ex}")
 
     async def async_set_temperature(self, **kwargs):
@@ -266,7 +267,7 @@ class FairlandClimate(FairlandEntity, ClimateEntity):
                 int(temperature),
             )
             self._attr_target_temperature = temperature
-        except Exception as ex:
+        except (FairlandApiClientCommunicationError, FairlandApiClientError) as ex:
             LOGGER.error("Error setting temperature: %s", ex)
 
     async def async_set_hvac_mode(self, hvac_mode):
@@ -291,7 +292,7 @@ class FairlandClimate(FairlandEntity, ClimateEntity):
                     )
                 )
                 self._attr_hvac_mode = hvac_mode
-        except Exception as ex:
+        except (FairlandApiClientCommunicationError, FairlandApiClientError) as ex:
             LOGGER.error("Error setting HVAC mode: %s", ex)
 
     async def async_turn_on(self):
@@ -310,7 +311,7 @@ class FairlandClimate(FairlandEntity, ClimateEntity):
                 self._attr_hvac_mode = HVACMode.AUTO
             else:
                 self._attr_hvac_mode = last_mode
-        except Exception as ex:
+        except (FairlandApiClientCommunicationError, FairlandApiClientError) as ex:
             LOGGER.error("Error turning on: %s", ex)
 
     async def async_turn_off(self):
@@ -324,5 +325,5 @@ class FairlandClimate(FairlandEntity, ClimateEntity):
             self._is_on = False
             self._attr_hvac_mode = HVACMode.OFF
             self._attr_hvac_action = HVACAction.OFF
-        except Exception as ex:
+        except (FairlandApiClientCommunicationError, FairlandApiClientError) as ex:
             LOGGER.error("Error turning off: %s", ex)

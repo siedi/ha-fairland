@@ -9,6 +9,7 @@ from homeassistant.components.number import NumberEntity, NumberMode
 from homeassistant.const import UnitOfTemperature
 from homeassistant.helpers.entity import DeviceInfo, EntityCategory
 
+from .api import FairlandApiClientCommunicationError, FairlandApiClientError
 from .const import DOMAIN, LOGGER
 from .entity import FairlandEntity
 
@@ -120,7 +121,11 @@ async def async_setup_entry(
                                     if "step" in prop:
                                         config = config.copy()
                                         config["step"] = float(prop["step"])
-                                except Exception as ex:
+                                except (
+                                    json.JSONDecodeError,
+                                    KeyError,
+                                    ValueError,
+                                ) as ex:
                                     LOGGER.warning(
                                         "Failed to parse dpProperty for number entity: %s",
                                         ex,
@@ -217,7 +222,7 @@ class FairlandNumber(FairlandEntity, NumberEntity):
 
             # Aktualisiere, um den neuen Zustand zu erhalten
             await self.coordinator.async_request_refresh()
-        except Exception as ex:
+        except (FairlandApiClientCommunicationError, FairlandApiClientError) as ex:
             LOGGER.error("Error setting value: %s", ex)
 
     async def async_added_to_hass(self) -> None:

@@ -2,17 +2,9 @@
 
 from __future__ import annotations
 
-import asyncio
-import logging
-from typing import Any
-
-import aiohttp
-from async_timeout import timeout
 import voluptuous as vol
 
 from homeassistant import config_entries
-from homeassistant.core import HomeAssistant
-from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
 import homeassistant.helpers.config_validation as cv
@@ -146,7 +138,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         "devices": self.devices,
                     },
                 )
-            except Exception as ex:
+            except (FairlandApiClientCommunicationError, FairlandApiClientError) as ex:
                 LOGGER.exception("Failed to get devices: %s", ex)
                 _errors["base"] = "devices_error"
 

@@ -8,15 +8,16 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from homeassistant.config_entries import ConfigEntry, ConfigFlowResult
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, Platform
-from homeassistant.exceptions import ConfigEntryNotReady
-from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.loader import async_get_loaded_integration
 
 # from . import climate, sensor, switch
-from .api import FairlandApiClient
+from .api import (
+    FairlandApiClient,
+    FairlandApiClientCommunicationError,
+    FairlandApiClientError,
+)
 from .const import LOGGER
 from .coordinator import FairlandDataUpdateCoordinator
 from .data import FairlandData
@@ -61,7 +62,7 @@ async def async_setup_entry(
     # Login
     try:
         await apiClient.login()
-    except Exception as ex:
+    except (FairlandApiClientCommunicationError, FairlandApiClientError) as ex:
         LOGGER.exception("Failed to login: %s", ex)
         return False
 

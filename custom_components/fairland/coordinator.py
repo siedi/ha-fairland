@@ -5,11 +5,10 @@ from __future__ import annotations
 from datetime import timedelta
 from typing import TYPE_CHECKING
 
-from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .api import FairlandApiClientAuthenticationError, FairlandApiClientError
+from .api import FairlandApiClientCommunicationError, FairlandApiClientError
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -65,13 +64,14 @@ class FairlandDataUpdateCoordinator(DataUpdateCoordinator):
                     updated_device = device.copy()
                     updated_device["dps"] = device_status
                     updated_devices.append(updated_device)
-                except Exception as device_ex:
+                except (FairlandApiClientCommunicationError, FairlandApiClientError):
                     # Keep the old data
                     updated_devices.append(device)
 
+        except (FairlandApiClientCommunicationError, FairlandApiClientError) as ex:
+            raise UpdateFailed(f"Error updating data: {ex}") from ex
+        else:
             return updated_devices
-        except Exception as ex:
-            raise UpdateFailed(f"Error updating data: {ex}")
 
     async def _update_device_registry(self, device):
         """Check for new devices and update existing ones."""
