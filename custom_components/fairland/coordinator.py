@@ -73,39 +73,3 @@ class FairlandDataUpdateCoordinator(DataUpdateCoordinator):
             raise UpdateFailed(f"Error updating data: {ex}") from ex
         else:
             return updated_devices
-
-    async def _update_device_registry(self, device):
-        """Check for new devices and update existing ones."""
-        device_registry = dr.async_get(self.hass)
-
-        if device["id"] not in self.device_ids:
-            # Neues Gerät gefunden - registrieren
-            device = device_registry.async_get_or_create(
-                config_entry_id=self.config_entry.entry_id,
-                identifiers={(DOMAIN, device["id"])},
-                name=device["deviceName"],
-                manufacturer="Fairland",
-                model=device.get("categoryCode", "Unknown"),
-                sw_version=device.get("version", "Unknown"),
-                serial_number=device.get("sn", "Unknown"),
-            )
-            self.device_ids[device["id"]] = device["id"]
-        else:
-            # Gerät existiert bereits - aktualisieren falls nötig
-            device = device_registry.async_get_device({(DOMAIN, device["id"])})
-            if device:
-                # Prüfe, ob sich gerätespezifische Informationen geändert haben
-                updated_values = {}
-
-                if device.name != device.get("deviceName"):
-                    updated_values["name"] = device.get("deviceName")
-
-                if device.model != device.get("categoryCode"):
-                    updated_values["model"] = device.get("categoryCode")
-
-                if device.sw_version != device.get("version"):
-                    updated_values["sw_version"] = device.get("version")
-
-                # Wenn Aktualisierungen notwendig sind
-                if updated_values:
-                    device_registry.async_update_device(device["id"], **updated_values)

@@ -4,14 +4,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from homeassistant.components.climate import (
-    ClimateEntity,
+from homeassistant.components.climate import ClimateEntity
+
+from homeassistant.components.climate.const import (
     ClimateEntityFeature,
     HVACAction,
     HVACMode,
 )
 from homeassistant.const import ATTR_TEMPERATURE, PRECISION_WHOLE, UnitOfTemperature
-from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.helpers.device_registry import DeviceInfo
 
 from .api import FairlandApiClientCommunicationError, FairlandApiClientError
 from .const import DOMAIN, LOGGER
@@ -272,8 +273,8 @@ class FairlandClimate(FairlandEntity, ClimateEntity):
         try:
             await self.coordinator.config_entry.runtime_data.client.set_device_status(
                 self._device_id,
-                "103",  # Target temperature data point
-                int(temperature),
+                "107",  # Target temperature data point
+                temperature,
             )
             self._attr_target_temperature = temperature
         except (FairlandApiClientCommunicationError, FairlandApiClientError) as ex:
