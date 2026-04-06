@@ -8,8 +8,8 @@
           "countryCode": "Country Code",
           "scan_interval": "Scan Interval (seconds)"
         },
-        "description": "Enter your Fairland credentials",
-        "title": "Fairland Account Setup"
+        "description": "Enter your Fairland iGarden app credentials. This integration only works with the **iGarden app**, not the SmartPool app.",
+        "title": "Fairland (iGarden) Account Setup"
       },
       "courtyard": {
         "data": {
@@ -29,7 +29,7 @@
     },
     "error": {
       "cannot_connect": "Failed to connect to the Fairland API",
-      "invalid_auth": "Invalid credentials. Please check your account email and password.",
+      "invalid_auth": "Invalid credentials. Make sure you are using your iGarden app account (SmartPool accounts are not supported).",
       "cannot_get_courtyards": "Failed to retrieve available courtyards",
       "devices_error": "Failed to retrieve devices from courtyard",
       "unknown": "Unexpected error"

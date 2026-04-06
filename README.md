@@ -5,6 +5,12 @@
 
 This integration enables monitoring and control of Fairland pool heat pumps in Home Assistant, connecting directly to Fairland's cloud API rather than using Tuya.
 
+## Compatibility
+
+> **Important:** This integration only works with Fairland heat pumps that use the **iGarden app** (and its corresponding firmware/cloud). It is **not compatible** with the Fairland SmartPool app, which is Tuya-based and uses a completely different API.
+>
+> If your heat pump is paired with the SmartPool app, look into Tuya-based integrations instead (e.g. [LocalTuya](https://github.com/rospogriern/localtuya) or the built-in Tuya integration).
+
 ## Features
 
 * Monitor operational parameters of your heat pump
