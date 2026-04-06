@@ -184,6 +184,8 @@ class FairlandApiClient:
             raise FairlandApiClientCommunicationError(
                 msg,
             ) from exception
+        except FairlandApiClientAuthenticationError:
+            raise
         except Exception as exception:  # pylint: disable=broad-except
             msg = f"Something really wrong happened! - {exception}"
             LOGGER.error(msg)

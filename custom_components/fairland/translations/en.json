@@ -29,8 +29,9 @@
     },
     "error": {
       "cannot_connect": "Failed to connect to the Fairland API",
-      "invalid_auth": "Invalid authentication",
+      "invalid_auth": "Invalid credentials. Please check your account email and password.",
       "cannot_get_courtyards": "Failed to retrieve available courtyards",
+      "devices_error": "Failed to retrieve devices from courtyard",
       "unknown": "Unexpected error"
     },
     "abort": {

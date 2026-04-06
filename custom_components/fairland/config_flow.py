@@ -75,10 +75,10 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
             except FairlandApiClientAuthenticationError as exception:
                 LOGGER.warning(exception)
-                _errors["base"] = "auth"
+                _errors["base"] = "invalid_auth"
             except FairlandApiClientCommunicationError as exception:
                 LOGGER.error(exception)
-                _errors["base"] = "connection"
+                _errors["base"] = "cannot_connect"
             except FairlandApiClientError as exception:
                 LOGGER.exception(exception)
                 _errors["base"] = "unknown"
