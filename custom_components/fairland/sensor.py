@@ -283,8 +283,9 @@ async def async_setup_entry(
             # Für jeden Sensortyp prüfen, ob er verfügbar ist
             for dp_id, sensor_config in SENSOR_TYPES.items():
                 if dp_id in dp_map:
-                    # Werte spezifische Einstellungen aus dpProperty aus
-                    if dp_id == "112" and "dpProperty" in dp_map[dp_id]:
+                    # scale aus dpProperty übernehmen, falls vorhanden.
+                    # Firmware liefert Temperaturen teils als Integer × 10 (scale=1).
+                    if "dpProperty" in dp_map[dp_id]:
                         try:
                             prop = json.loads(dp_map[dp_id]["dpProperty"])
                             if "scale" in prop:
@@ -292,7 +293,7 @@ async def async_setup_entry(
                                 sensor_config["scale"] = int(prop["scale"])
                         except (json.JSONDecodeError, KeyError, ValueError) as ex:
                             LOGGER.warning(
-                                "Failed to parse dpProperty for power sensor: %s", ex
+                                "Failed to parse dpProperty for dp %s: %s", dp_id, ex
                             )
 
                     entities.append(

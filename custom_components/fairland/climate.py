@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from typing import TYPE_CHECKING, Any
 
 from homeassistant.components.climate import ClimateEntity
@@ -104,6 +105,10 @@ class FairlandClimate(FairlandEntity, ClimateEntity):
         for dp in device_info["dps"]:
             self._index_data[dp["dpId"]] = dp
 
+        # Firmware liefert manche Werte als Integer × 10^scale (z. B. Temperaturen
+        # mit scale=1). Map dpId -> scale, default 0 = keine Skalierung.
+        self._scales = self._parse_scales(device_info)
+
         # Setup preset modes dynamically if running mode is available
         self._preset_modes_map = {}
         self._preset_modes_reverse_map = {}
@@ -136,6 +141,39 @@ class FairlandClimate(FairlandEntity, ClimateEntity):
         # Initialize the values
         self._update_state()
 
+    @staticmethod
+    def _parse_scales(device_info: dict[str, Any]) -> dict[str, int]:
+        """Extract scale exponents from each dp's dpProperty JSON."""
+        scales: dict[str, int] = {}
+        for dp in device_info.get("dps", []):
+            prop = dp.get("dpProperty")
+            if not isinstance(prop, str):
+                continue
+            try:
+                parsed = json.loads(prop)
+            except (json.JSONDecodeError, ValueError):
+                continue
+            if "scale" in parsed:
+                try:
+                    scales[dp["dpId"]] = int(parsed["scale"])
+                except (TypeError, ValueError):
+                    pass
+        return scales
+
+    def _scale_read(self, dp_id: str, value: Any) -> Any:
+        """Apply scale: raw API value -> user-facing value."""
+        scale = self._scales.get(dp_id, 0)
+        if scale > 0 and value is not None:
+            return value / (10**scale)
+        return value
+
+    def _scale_write(self, dp_id: str, value: float) -> Any:
+        """Apply scale: user-facing value -> raw API value."""
+        scale = self._scales.get(dp_id, 0)
+        if scale > 0:
+            return int(round(value * (10**scale)))
+        return value
+
     def _setup_preset_modes(self):
         """Set up preset modes from the device data."""
         running_mode_dp = self._index_data.get("102")
@@ -144,8 +182,6 @@ class FairlandClimate(FairlandEntity, ClimateEntity):
             return
 
         try:
-            import json
-
             # Parse the dpProperty which contains the mode mapping
             mode_mapping = json.loads(running_mode_dp["dpProperty"])
 
@@ -229,10 +265,10 @@ class FairlandClimate(FairlandEntity, ClimateEntity):
                         self._attr_hvac_mode = HVAC_MODE_MAP.get(value, HVACMode.OFF)
 
                 elif dp_id == "103":  # Current temperature
-                    self._attr_current_temperature = value
+                    self._attr_current_temperature = self._scale_read(dp_id, value)
 
                 elif dp_id == "107":  # Target temperature
-                    self._attr_target_temperature = value
+                    self._attr_target_temperature = self._scale_read(dp_id, value)
 
                 elif dp_id == "113":  # Operating status
                     # 0: standby, 1: operating
@@ -274,7 +310,7 @@ class FairlandClimate(FairlandEntity, ClimateEntity):
             await self.coordinator.config_entry.runtime_data.client.set_device_status(
                 self._device_id,
                 "107",  # Target temperature data point
-                temperature,
+                self._scale_write("107", temperature),
             )
             self._attr_target_temperature = temperature
         except (FairlandApiClientCommunicationError, FairlandApiClientError) as ex:
