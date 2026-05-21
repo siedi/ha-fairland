@@ -6,11 +6,16 @@ import json
 from typing import TYPE_CHECKING, Any
 
 from homeassistant.components.number import NumberEntity, NumberMode
-from homeassistant.const import UnitOfTemperature
+from homeassistant.const import PERCENTAGE, UnitOfTemperature, UnitOfTime
 from homeassistant.helpers.entity import DeviceInfo, EntityCategory
 
 from .api import FairlandApiClientCommunicationError, FairlandApiClientError
-from .const import DOMAIN, LOGGER
+from .const import (
+    DOMAIN,
+    HEAT_PUMP_CATEGORY_CODE,
+    LOGGER,
+    WATER_PUMP_CATEGORY_CODE,
+)
 from .entity import FairlandEntity
 
 if TYPE_CHECKING:
@@ -20,8 +25,8 @@ if TYPE_CHECKING:
     from .coordinator import FairlandDataUpdateCoordinator
     from .data import FairlandConfigEntry
 
-# Define writable parameters
-NUMBER_TYPES = {
+# Heat-pump writable parameters.
+HEAT_PUMP_NUMBER_TYPES = {
     "116": {
         "name": "Set Water Pump Mode",
         "unit": None,
@@ -85,6 +90,33 @@ NUMBER_TYPES = {
 }
 
 
+# Water-pump writable parameters. The Inverflow Plus pump (and OEM rebadges
+# like Madimack) drives a real motor, so default ranges are deliberately
+# conservative. The dpProperty min/max/step override below means we always
+# clamp to whatever the firmware reports.
+WATER_PUMP_NUMBER_TYPES = {
+    "111": {
+        "name": "Speed Setpoint",
+        "unit": PERCENTAGE,
+        "icon": "mdi:speedometer",
+        "min": 30,
+        "max": 100,
+        "step": 1,
+        "mode": NumberMode.SLIDER,
+    },
+    "104": {
+        "name": "Backwash Duration",
+        "unit": UnitOfTime.MINUTES,
+        "icon": "mdi:timer-sand",
+        "min": 0,
+        "max": 1440,
+        "step": 1,
+        "mode": NumberMode.BOX,
+        "entity_category": EntityCategory.CONFIG,
+    },
+}
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: FairlandConfigEntry,
@@ -96,49 +128,56 @@ async def async_setup_entry(
     entities = []
     devices = entry.runtime_data.coordinator.data
 
-    # Create number entities for each writable parameter
     for device_info in devices:
-        if device_info.get("categoryCode") == "heatPump":
-            if "dps" in device_info:
-                dp_map = {item["dpId"]: item for item in device_info["dps"]}
+        category = device_info.get("categoryCode")
+        if category == HEAT_PUMP_CATEGORY_CODE:
+            number_types = HEAT_PUMP_NUMBER_TYPES
+        elif category == WATER_PUMP_CATEGORY_CODE:
+            number_types = WATER_PUMP_NUMBER_TYPES
+        else:
+            continue
 
-                # Für jeden schreibbaren Parameter prüfen
-                for dp_id, config in NUMBER_TYPES.items():
-                    if dp_id in dp_map:
-                        # Prüfen ob der Parameter schreibbar ist
-                        if dp_map[dp_id].get("dpMode") == "rw":
-                            # Werte spezifische Einstellungen aus dpProperty aus
-                            if "dpProperty" in dp_map[dp_id]:
-                                try:
-                                    prop = json.loads(dp_map[dp_id]["dpProperty"])
-                                    # Aktualisiere min/max/step basierend auf den tatsächlichen Geräteeigenschaften
-                                    if "min" in prop:
-                                        config = config.copy()
-                                        config["min"] = float(prop["min"])
-                                    if "max" in prop:
-                                        config = config.copy()
-                                        config["max"] = float(prop["max"])
-                                    if "step" in prop:
-                                        config = config.copy()
-                                        config["step"] = float(prop["step"])
-                                except (
-                                    json.JSONDecodeError,
-                                    KeyError,
-                                    ValueError,
-                                ) as ex:
-                                    LOGGER.warning(
-                                        "Failed to parse dpProperty for number entity: %s",
-                                        ex,
-                                    )
+        if "dps" not in device_info:
+            continue
 
-                            entities.append(
-                                FairlandNumber(
-                                    coordinator=entry.runtime_data.coordinator,
-                                    device_info=device_info,
-                                    dp_id=dp_id,
-                                    config=config,
-                                )
-                            )
+        dp_map = {item["dpId"]: item for item in device_info["dps"]}
+
+        # Für jeden schreibbaren Parameter prüfen
+        for dp_id, config in number_types.items():
+            if dp_id not in dp_map:
+                continue
+            # Prüfen ob der Parameter schreibbar ist
+            if dp_map[dp_id].get("dpMode") != "rw":
+                continue
+
+            # Werte spezifische Einstellungen aus dpProperty aus
+            if "dpProperty" in dp_map[dp_id]:
+                try:
+                    prop = json.loads(dp_map[dp_id]["dpProperty"])
+                    # Aktualisiere min/max/step basierend auf den tatsächlichen Geräteeigenschaften
+                    if "min" in prop:
+                        config = config.copy()
+                        config["min"] = float(prop["min"])
+                    if "max" in prop:
+                        config = config.copy()
+                        config["max"] = float(prop["max"])
+                    if "step" in prop:
+                        config = config.copy()
+                        config["step"] = float(prop["step"])
+                except (json.JSONDecodeError, KeyError, ValueError) as ex:
+                    LOGGER.warning(
+                        "Failed to parse dpProperty for number entity: %s",
+                        ex,
+                    )
+
+            entities.append(
+                FairlandNumber(
+                    coordinator=entry.runtime_data.coordinator,
+                    device_info=device_info,
+                    dp_id=dp_id,
+                    config=config,
+                )
+            )
 
     async_add_entities(entities, True)
 
