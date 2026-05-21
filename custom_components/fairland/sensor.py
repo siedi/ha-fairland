@@ -10,10 +10,21 @@ from homeassistant.components.sensor import (
     SensorEntity,
     SensorStateClass,
 )
-from homeassistant.const import PERCENTAGE, UnitOfPower, UnitOfTemperature
+from homeassistant.const import (
+    PERCENTAGE,
+    UnitOfEnergy,
+    UnitOfPower,
+    UnitOfTemperature,
+    UnitOfTime,
+)
 from homeassistant.helpers.entity import DeviceInfo, EntityCategory
 
-from .const import DOMAIN, LOGGER
+from .const import (
+    DOMAIN,
+    HEAT_PUMP_CATEGORY_CODE,
+    LOGGER,
+    WATER_PUMP_CATEGORY_CODE,
+)
 from .entity import FairlandEntity
 
 if TYPE_CHECKING:
@@ -24,8 +35,11 @@ if TYPE_CHECKING:
     from .data import FairlandConfigEntry
 
 
-# Define sensor types with the new detailed data points
-SENSOR_TYPES = {
+# Heat-pump sensor types. dpId namespace is *not* shared with water pumps:
+# e.g. heat-pump dpId 108 = Lower Temperature Limit, water-pump dpId 108 =
+# Backwash Countdown. Dispatch in async_setup_entry guards against the
+# collision.
+HEAT_PUMP_SENSOR_TYPES = {
     # Temperaturen
     "103": {
         "name": "Inlet Water Temperature",
@@ -261,6 +275,36 @@ SENSOR_TYPES = {
 }
 
 
+# Read-only data points exposed by Fairland-platform water pumps (e.g.
+# Inverflow Plus and OEM-rebadged variants such as Madimack). Energy is
+# reported as an integer with a dpProperty scale (typically scale=2), so it
+# rides the same scaling path as heat-pump temperature/power values.
+WATER_PUMP_SENSOR_TYPES = {
+    "5": {
+        "name": "Current Power",
+        "unit": UnitOfPower.WATT,
+        "icon": "mdi:flash",
+        "device_class": SensorDeviceClass.POWER,
+        "state_class": SensorStateClass.MEASUREMENT,
+    },
+    "108": {
+        "name": "Backwash Countdown",
+        "unit": UnitOfTime.MINUTES,
+        "icon": "mdi:timer-sand",
+        "device_class": SensorDeviceClass.DURATION,
+        "state_class": SensorStateClass.MEASUREMENT,
+        "entity_category": EntityCategory.DIAGNOSTIC,
+    },
+    "109": {
+        "name": "Energy Consumption",
+        "unit": UnitOfEnergy.KILO_WATT_HOUR,
+        "icon": "mdi:lightning-bolt",
+        "device_class": SensorDeviceClass.ENERGY,
+        "state_class": SensorStateClass.TOTAL_INCREASING,
+    },
+}
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: FairlandConfigEntry,
@@ -272,37 +316,46 @@ async def async_setup_entry(
     entities = []
     devices = entry.runtime_data.coordinator.data
 
-    # Create climate entities for each device
     for device_info in devices:
-        if "dps" in device_info:
-            dp_map = {item["dpId"]: item for item in device_info["dps"]}
+        if "dps" not in device_info:
+            continue
 
-            # Für jeden Sensortyp prüfen, ob er verfügbar ist
-            for dp_id, sensor_config in SENSOR_TYPES.items():
-                if dp_id in dp_map:
-                    # scale aus dpProperty übernehmen, falls vorhanden.
-                    # Firmware liefert Temperaturen teils als Integer × 10 (scale=1).
-                    if "dpProperty" in dp_map[dp_id]:
-                        try:
-                            prop = json.loads(dp_map[dp_id]["dpProperty"])
-                            if "scale" in prop:
-                                sensor_config = sensor_config.copy()
-                                sensor_config["scale"] = int(prop["scale"])
-                        except (json.JSONDecodeError, KeyError, ValueError) as ex:
-                            LOGGER.warning(
-                                "Failed to parse dpProperty for dp %s: %s", dp_id, ex
-                            )
+        category = device_info.get("categoryCode")
+        if category == HEAT_PUMP_CATEGORY_CODE:
+            sensor_types = HEAT_PUMP_SENSOR_TYPES
+        elif category == WATER_PUMP_CATEGORY_CODE:
+            sensor_types = WATER_PUMP_SENSOR_TYPES
+        else:
+            continue
 
-                    entities.append(
-                        FairlandSensor(
-                            coordinator=entry.runtime_data.coordinator,
-                            device_info=device_info,
-                            dp_id=dp_id,
-                            sensor_config=sensor_config,
-                        )
-                        # dp_id,
-                        # sensor_config,
+        dp_map = {item["dpId"]: item for item in device_info["dps"]}
+
+        # Für jeden Sensortyp prüfen, ob er verfügbar ist
+        for dp_id, sensor_config in sensor_types.items():
+            if dp_id not in dp_map:
+                continue
+
+            # scale aus dpProperty übernehmen, falls vorhanden.
+            # Firmware liefert Temperaturen teils als Integer × 10 (scale=1).
+            if "dpProperty" in dp_map[dp_id]:
+                try:
+                    prop = json.loads(dp_map[dp_id]["dpProperty"])
+                    if "scale" in prop:
+                        sensor_config = sensor_config.copy()
+                        sensor_config["scale"] = int(prop["scale"])
+                except (json.JSONDecodeError, KeyError, ValueError) as ex:
+                    LOGGER.warning(
+                        "Failed to parse dpProperty for dp %s: %s", dp_id, ex
                     )
+
+            entities.append(
+                FairlandSensor(
+                    coordinator=entry.runtime_data.coordinator,
+                    device_info=device_info,
+                    dp_id=dp_id,
+                    sensor_config=sensor_config,
+                )
+            )
 
     async_add_entities(entities, True)
 
