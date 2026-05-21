@@ -39,5 +39,16 @@
       "no_courtyards": "No courtyards found for this account",
       "reconfigure_successful": "Reconfiguration successful"
     }
+  },
+  "entity": {
+    "select": {
+      "water_pump_mode": {
+        "name": "Mode",
+        "state": {
+          "manual_inverter": "Manual Inverter",
+          "backwash": "Backwash"
+        }
+      }
+    }
   }
 }
