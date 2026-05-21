@@ -8,7 +8,7 @@
           "countryCode": "Country Code",
           "scan_interval": "Scan Interval (seconds)"
         },
-        "description": "Enter your Fairland iGarden app credentials. This integration only works with the **iGarden app**, not the SmartPool app.",
+        "description": "Enter your Fairland iGarden app credentials. This integration supports Fairland pool heat pumps and pool pumps (including OEM-rebadged variants such as Madimack) and only works with the **iGarden app**, not the SmartPool app.",
         "title": "Fairland (iGarden) Account Setup"
       },
       "courtyard": {
