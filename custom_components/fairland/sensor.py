@@ -272,9 +272,6 @@ async def async_setup_entry(
     entities = []
     devices = entry.runtime_data.coordinator.data
 
-    entities = []
-    devices = entry.runtime_data.coordinator.data
-
     # Create climate entities for each device
     for device_info in devices:
         if "dps" in device_info:
