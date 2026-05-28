@@ -1,21 +1,27 @@
-# Fairland Pool Heat Pump Integration for Home Assistant
+# Fairland (iGarden) Integration for Home Assistant
 
 [![HACS Badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/custom-components/hacs)
 [![GitHub Release](https://img.shields.io/github/release/siedi/ha-fairland.svg)](https://github.com/siedi/ha-fairland/releases)
 
-This integration enables monitoring and control of Fairland pool heat pumps in Home Assistant, connecting directly to Fairland's cloud API rather than using Tuya.
+This integration enables monitoring and control of Fairland pool heat pumps and pool pumps (Inverflow Plus and OEM-rebadged variants such as Madimack) in Home Assistant, connecting directly to Fairland's iGarden cloud API rather than using Tuya.
 
 ## Compatibility
 
-> **Important:** This integration only works with Fairland heat pumps that use the **iGarden app** (and its corresponding firmware/cloud). It is **not compatible** with the Fairland SmartPool app, which is Tuya-based and uses a completely different API.
+> **Important:** This integration only works with Fairland devices that use the **iGarden app** (and its corresponding firmware/cloud). It is **not compatible** with the Fairland SmartPool app, which is Tuya-based and uses a completely different API.
 >
-> If your heat pump is paired with the SmartPool app, look into Tuya-based integrations instead (e.g. [LocalTuya](https://github.com/rospogriern/localtuya) or the built-in Tuya integration).
+> If your device is paired with the SmartPool app, look into Tuya-based integrations instead (e.g. [LocalTuya](https://github.com/rospogriern/localtuya) or the built-in Tuya integration).
+
+## Supported Devices
+
+* Fairland pool heat pumps on the iGarden platform
+* Fairland Inverflow Plus pool pumps on the iGarden platform
+* OEM-rebadged variants of the above — Madimack pool pumps (e.g. Inverflow Plus 1.5hp) are Fairland OEM rebrands and run on the same iGarden cloud, so they are supported as well
 
 ## Features
 
-* Monitor operational parameters of your heat pump
+* Monitor operational parameters of your Fairland device
 * Control settings directly from Home Assistant
-* Support for multiple Fairland heat pump models
+* Support for multiple Fairland heat pump and pool pump models
 * Direct cloud API connection to Fairland (not using Tuya)
 
 ## Installation
@@ -51,28 +57,44 @@ You will need your Fairland app account credentials to set up the integration.
 
 ## Supported Entities
 
-The integration creates various entities to monitor and control your Fairland heat pump:
+The integration creates a range of entities depending on the type of device discovered on your iGarden account.
 
-### Climate Entity
+### For heat pumps
+
+#### Climate Entity
 * Heat pump control (on/off, mode, temperature)
 
-### Sensors
+#### Sensors
 * Current temperature
 * Target temperature
 * Operating mode
 * Energy consumption
 * Other operational parameters
 
-### Switches/Controls
+#### Switches/Controls
 * Power switch
 * Mode selection (Heating, Cooling, Auto)
 * Additional operational controls, which shouldn't be touched unless you know what you're doing
 
-## Energy Monitoring Setup for Fairland Integration
+### For pool pumps
+
+* **Power switch** — turn the pump on/off
+* **Speed Setpoint** (number, 30-100%, slider) — target pump speed in Manual Inverter mode
+* **Backwash Duration** (number, 0-1440 minutes, configuration) — how long a backwash cycle should run
+* **Mode** (select: Manual Inverter / Backwash) — selecting **Backwash** starts a real backwash cycle on the pump
+* **Current Power** (sensor, W) — instantaneous power draw
+* **Backwash Countdown** (sensor, minutes, diagnostic) — minutes remaining in the active backwash cycle
+* **Energy Consumption** (sensor, kWh, `TOTAL_INCREASING`) — cumulative energy, works directly with the Energy Dashboard
+
+## Energy Monitoring
+
+> **Note:** Pool pumps expose `sensor.<device>_energy_consumption` natively (kWh, `TOTAL_INCREASING`) and can be added straight to the Energy Dashboard without the utility_meter / integration recipe below. The recipe in this section is only required for **heat pumps**, which expose instantaneous power (kW) but not cumulative energy.
+
+### Heat pumps: deriving energy from power
 
 To monitor your Fairland heat pump's energy consumption in the Home Assistant Energy Dashboard, you need to create an integration sensor that converts power (kW) to energy (kWh). Follow these steps:
 
-### Option: Configure via YAML
+#### Option: Configure via YAML
 
 1. Add the following configuration to your `configuration.yaml`:
 
@@ -97,22 +119,22 @@ sensor:
 
 3. Restart Home Assistant to apply the changes.
 
-### Adding to Energy Dashboard
+#### Adding to Energy Dashboard
 
 1. Go to **Settings > Dashboards > Energy**.
 2. In the **Electricity grid** section, click **Add Consumption**.
-3. Under **Individual devices**, select your `sensor.fairland_energy_kwh` sensor.
+3. Under **Individual devices**, select your `sensor.fairland_energy_kwh` sensor (heat pumps) or `sensor.<device>_energy_consumption` (pool pumps).
 4. Click **Save**.
 
-Now your Fairland heat pump's energy consumption will be tracked in the Energy Dashboard!
+Now your Fairland device's energy consumption will be tracked in the Energy Dashboard!
 
-### Understanding the Configuration
+#### Understanding the Configuration
 
 * The `integration` sensor automatically converts power (kW) to energy (kWh) by integrating the power usage over time.
 * `unit_prefix`: k ensures the values are displayed in kilowatt-hours (kWh) instead of watt-hours (Wh).
 * The `utility_meter` entities provide daily and monthly consumption statistics.
 
-### Troubleshooting
+#### Troubleshooting
 
 If you don't see data in the Energy Dashboard:
 

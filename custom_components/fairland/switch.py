@@ -8,7 +8,12 @@ from homeassistant.components.switch import SwitchEntity, SwitchEntityDescriptio
 from homeassistant.helpers.entity import DeviceInfo
 
 from .api import FairlandApiClientCommunicationError, FairlandApiClientError
-from .const import DOMAIN, LOGGER
+from .const import (
+    DOMAIN,
+    HEAT_PUMP_CATEGORY_CODE,
+    LOGGER,
+    WATER_PUMP_CATEGORY_CODE,
+)
 from .entity import FairlandEntity
 
 if TYPE_CHECKING:
@@ -26,6 +31,12 @@ ENTITY_DESCRIPTIONS = (
     ),
 )
 
+# Power dpId differs per category: heat pumps use dpId 101, water pumps
+# use dpId 105. They cannot share a fixed constant because dpId 105 is the
+# "Running Percentage" diagnostic sensor on heat pumps.
+HEAT_PUMP_POWER_DP_ID = "101"
+WATER_PUMP_POWER_DP_ID = "105"
+
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -38,19 +49,38 @@ async def async_setup_entry(
     entities = []
     devices = entry.runtime_data.coordinator.data
 
-    # Create switch entities for each device
     for device_info in devices:
-        # Prüfe, ob es sich um eine Wärmepumpe handelt
-        if device_info.get("categoryCode") == "heatPump":
+        category = device_info.get("categoryCode")
+        if category == HEAT_PUMP_CATEGORY_CODE:
             LOGGER.debug("Found heat pump device: %s", device_info["deviceName"])
             entities.append(
                 FairlandSwitch(
                     coordinator=entry.runtime_data.coordinator,
                     device_info=device_info,
                     entity_description=ENTITY_DESCRIPTIONS,
+                    power_dp_id=HEAT_PUMP_POWER_DP_ID,
+                )
+            )
+        elif category == WATER_PUMP_CATEGORY_CODE:
+            # Skip water pumps that don't expose the power dpId at all
+            # (defensive — every firmware seen so far exposes 105).
+            if not _has_dp(device_info, WATER_PUMP_POWER_DP_ID):
+                continue
+            LOGGER.debug("Found water pump device: %s", device_info["deviceName"])
+            entities.append(
+                FairlandSwitch(
+                    coordinator=entry.runtime_data.coordinator,
+                    device_info=device_info,
+                    entity_description=ENTITY_DESCRIPTIONS,
+                    power_dp_id=WATER_PUMP_POWER_DP_ID,
                 )
             )
     async_add_entities(entities, True)
+
+
+def _has_dp(device_info: dict[str, Any], dp_id: str) -> bool:
+    """Return True if device_info advertises the given dpId."""
+    return any(dp.get("dpId") == dp_id for dp in device_info.get("dps", []))
 
 
 class FairlandSwitch(FairlandEntity, SwitchEntity):
@@ -63,6 +93,7 @@ class FairlandSwitch(FairlandEntity, SwitchEntity):
         coordinator: FairlandDataUpdateCoordinator,
         device_info: dict[str, Any],
         entity_description: SwitchEntityDescription,
+        power_dp_id: str = "101",
     ) -> None:
         """Initialize the switch class."""
         super().__init__(coordinator)
@@ -71,6 +102,7 @@ class FairlandSwitch(FairlandEntity, SwitchEntity):
 
         self._device_info = device_info
         self._device_id = device_info["id"]
+        self._power_dp_id = power_dp_id
 
         self._attr_unique_id = f"{DOMAIN}_{self._device_id}_switch"
         self._attr_name = "Power"
@@ -93,7 +125,7 @@ class FairlandSwitch(FairlandEntity, SwitchEntity):
         """Update state from device data."""
         if "dps" in self._device_info:
             for dp in self._device_info["dps"]:
-                if dp["dpId"] == "101":  # Power switch
+                if dp["dpId"] == self._power_dp_id:
                     self._is_on = dp["dpValue"]
                     self._attr_available = True
                     return
@@ -133,15 +165,9 @@ class FairlandSwitch(FairlandEntity, SwitchEntity):
     async def async_turn_on(self, **kwargs) -> None:
         """Turn the switch on."""
         try:
-            # await self.hass.async_add_executor_job(
-            #    self._api.set_device_status,
-            #    self._device_id,
-            #    "101",  # Power switch data point
-            #    True,
-            # )
             await self.coordinator.config_entry.runtime_data.client.set_device_status(
                 self._device_id,
-                "101",  # Power switch data point
+                self._power_dp_id,
                 True,
             )
             self._is_on = True
@@ -157,7 +183,7 @@ class FairlandSwitch(FairlandEntity, SwitchEntity):
         try:
             await self.coordinator.config_entry.runtime_data.client.set_device_status(
                 self._device_id,
-                "101",  # Power switch data point
+                self._power_dp_id,
                 False,
             )
             self._is_on = False
