@@ -11,6 +11,12 @@ This integration enables monitoring and control of Fairland pool heat pumps and 
 >
 > If your device is paired with the SmartPool app, look into Tuya-based integrations instead (e.g. [LocalTuya](https://github.com/rospogriern/localtuya) or the built-in Tuya integration).
 
+## Known Limitations
+
+> **Single active session per account:** The iGarden cloud only allows one active session per account at a time. While the Home Assistant integration is connected, the iGarden mobile app will show your device as "offline" and cannot control it — and vice versa. This is enforced server-side; no header or client-fingerprint trick defeats it.
+>
+> **Recommended workaround:** Create a second iGarden account (different email) and use the iGarden app to *share* your device from the primary account to the second one. Then configure the Home Assistant integration with the second account's credentials. HA and your phone will use independent sessions and stop kicking each other out. See [#69](https://github.com/siedi/ha-fairland/issues/69) for the full context.
+
 ## Supported Devices
 
 * Fairland pool heat pumps on the iGarden platform
