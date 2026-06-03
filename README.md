@@ -150,17 +150,42 @@ If you don't see data in the Energy Dashboard:
 
 ## Troubleshooting
 
-If you experience issues with the integration, please check the Home Assistant logs for entries related to "fairland".
+If you experience issues with the integration, first check the Home Assistant logs for entries related to "fairland": **Settings → System → Logs**, then search for `fairland`.
 
-For detailed debugging:
-1. Enable debug logging by adding the following to your `configuration.yaml`:
-   ```yaml
-   logger:
-     default: info
-     logs:
-       custom_components.fairland: debug
-2. Restart Home Assistant
-3. Check the logs for detailed information
+### Login problems during setup
+
+If the setup dialog fails with an authentication or unknown error, the log contains a line like:
+
+```
+Login failed: <code> <message>
+```
+
+(requires v0.3.3 or newer). Please include this line when opening an issue — the error code tells us exactly what the cloud rejected.
+
+### Debug logging (integration already set up)
+
+1. Go to **Settings → Devices & Services → Fairland (iGarden)**
+2. Open the three-dot menu (⋮) in the top right corner and select **Enable debug logging**
+3. Reproduce the problem, then disable debug logging the same way — Home Assistant offers the collected log as a download
+
+> **Note:** The debug logging menu entry only appears if the `logger` integration is loaded. It is part of `default_config:`; if you maintain a manual `configuration.yaml` without `default_config:`, add a `logger:` line and restart.
+
+### Debug logging (setup not possible yet)
+
+The UI toggle requires a configured integration. If you can't get past the setup dialog, enable debug logging via `configuration.yaml` instead:
+
+```yaml
+logger:
+  default: info
+  logs:
+    custom_components.fairland: debug
+```
+
+Then restart Home Assistant, retry the setup, and check the logs.
+
+### Diagnostics download
+
+For device-related issues (wrong values, missing entities), attach a diagnostics dump to your report: **Settings → Devices & Services → Fairland (iGarden) → three-dot menu (⋮) on the entry → Download diagnostics**. The dump contains your devices' raw data points; credentials, serial numbers, and location data are redacted automatically.
 
 ## Development
 This custom component is based on integration_blueprint template.
