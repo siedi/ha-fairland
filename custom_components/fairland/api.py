@@ -82,6 +82,9 @@ class FairlandApiClient:
         if headers is None:
             headers = self._get_headers()
 
+        # Payloads here only contain device/group ids, never credentials.
+        LOGGER.debug("API request: %s %s payload=%s", method, url, payload)
+
         try:
             async with asyncio.timeout(10):
                 response = await self._session.request(
@@ -92,6 +95,12 @@ class FairlandApiClient:
                 )
                 _verify_response_or_raise(response)
                 data = await response.json()
+                LOGGER.debug(
+                    "API response from %s: code=%s msg=%s",
+                    url,
+                    data.get("code"),
+                    data.get("msg"),
+                )
                 return data["data"]
 
         except FairlandApiClientAuthenticationError:
@@ -149,6 +158,13 @@ class FairlandApiClient:
             """Handle login response error."""
             raise FairlandApiClientAuthenticationError(f"Login failed: {code} {msg}")
 
+        LOGGER.debug(
+            "Logging in as %s (phoneCode=%s, countryCode=%s)",
+            self.username,
+            payload["phoneCode"],
+            payload["countryCode"],
+        )
+
         try:
             async with asyncio.timeout(10):
                 response = await self._session.request(
@@ -158,17 +174,23 @@ class FairlandApiClient:
                     json=payload,
                 )
                 if response.status != 200:
-                    _handle_login_response_error(
-                        {response.status_code}, {response.text}
-                    )
+                    body = await response.text()
+                    LOGGER.debug("Login failed with HTTP %s: %s", response.status, body)
+                    _handle_login_response_error(response.status, body)
 
                 data = await response.json()
+                LOGGER.debug(
+                    "Login response: code=%s msg=%s",
+                    data.get("code"),
+                    data.get("msg"),
+                )
 
                 if data["code"] != 200000:
-                    _handle_login_response_error({data["code"]}, {data["msg"]})
+                    _handle_login_response_error(data["code"], data["msg"])
 
                 self.token = data["data"]["authorization"]
                 self.user_id = data["data"]["userId"]
+                LOGGER.debug("Login successful (userId=%s)", self.user_id)
 
                 return data["data"]
 
