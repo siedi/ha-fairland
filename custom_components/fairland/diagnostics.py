@@ -40,8 +40,16 @@ async def async_get_config_entry_diagnostics(
     """Return diagnostics for a config entry."""
     coordinator = entry.runtime_data.coordinator
 
+    # The config flow stores a snapshot of the device list (including dps)
+    # in entry.data at setup time. Nothing reads it afterwards and it never
+    # updates, so dumping it here is misleading: it looks like live device
+    # state but is frozen at setup (see issue #77, where three diagnostics
+    # taken in different pump modes all showed identical stale values).
+    # Only the coordinator data under "devices" reflects current state.
+    entry_data = {k: v for k, v in entry.data.items() if k != "devices"}
+
     return {
-        "entry_data": async_redact_data(entry.data, TO_REDACT),
+        "entry_data": async_redact_data(entry_data, TO_REDACT),
         "devices": async_redact_data(coordinator.data, TO_REDACT)
         if coordinator.data
         else None,
