@@ -275,6 +275,14 @@ HEAT_PUMP_SENSOR_TYPES = {
 }
 
 
+# Firmware-reported time units (dpProperty "unit") we trust to override a
+# default time unit: backwash duration/countdown come in seconds on some
+# pumps (e.g. InverFlow(L), issue #77) and minutes on others.
+DP_PROPERTY_TIME_UNITS = {
+    "s": UnitOfTime.SECONDS,
+    "min": UnitOfTime.MINUTES,
+}
+
 # Read-only data points exposed by Fairland-platform water pumps (e.g.
 # Inverflow Plus and OEM-rebadged variants such as Madimack). Energy is
 # reported as an integer with a dpProperty scale (typically scale=2), so it
@@ -286,6 +294,18 @@ WATER_PUMP_SENSOR_TYPES = {
         "icon": "mdi:flash",
         "device_class": SensorDeviceClass.POWER,
         "state_class": SensorStateClass.MEASUREMENT,
+    },
+    # dpId 102 ("real-time running rate") is defined in the cloud schema for
+    # every pump, but some firmwares never populate it (always null) while
+    # others report live motor speed. Only created when the device actually
+    # reports a value (see "require_value" handling in async_setup_entry).
+    "102": {
+        "name": "Running Rate",
+        "unit": PERCENTAGE,
+        "icon": "mdi:speedometer",
+        "device_class": None,
+        "state_class": SensorStateClass.MEASUREMENT,
+        "require_value": True,
     },
     "108": {
         "name": "Backwash Countdown",
@@ -335,6 +355,15 @@ async def async_setup_entry(
             if dp_id not in dp_map:
                 continue
 
+            # Datenpunkte, die nur im Cloud-Schema existieren, aber von der
+            # Firmware nie befüllt werden, gar nicht erst anlegen.
+            if (
+                sensor_config.get("require_value")
+                and dp_map[dp_id].get("dpValue") is None
+            ):
+                LOGGER.debug("Skipping dp %s: firmware does not populate it", dp_id)
+                continue
+
             # scale aus dpProperty übernehmen, falls vorhanden.
             # Firmware liefert Temperaturen teils als Integer × 10 (scale=1).
             if "dpProperty" in dp_map[dp_id]:
@@ -343,6 +372,15 @@ async def async_setup_entry(
                     if "scale" in prop:
                         sensor_config = sensor_config.copy()
                         sensor_config["scale"] = int(prop["scale"])
+                    # Zeit-Einheit aus der Firmware übernehmen: manche Pumpen
+                    # melden Backwash-Dauern in Sekunden statt Minuten (#77).
+                    if (
+                        sensor_config.get("unit")
+                        in (UnitOfTime.MINUTES, UnitOfTime.SECONDS)
+                        and prop.get("unit") in DP_PROPERTY_TIME_UNITS
+                    ):
+                        sensor_config = sensor_config.copy()
+                        sensor_config["unit"] = DP_PROPERTY_TIME_UNITS[prop["unit"]]
                 except (json.JSONDecodeError, KeyError, ValueError) as ex:
                     LOGGER.warning(
                         "Failed to parse dpProperty for dp %s: %s", dp_id, ex

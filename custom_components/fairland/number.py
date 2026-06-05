@@ -116,6 +116,14 @@ WATER_PUMP_NUMBER_TYPES = {
     },
 }
 
+# Firmware-reported time units (dpProperty "unit") we trust to override a
+# default time unit: the backwash duration comes in seconds on some pumps
+# (e.g. InverFlow(L), issue #77) and minutes on others.
+DP_PROPERTY_TIME_UNITS = {
+    "s": UnitOfTime.SECONDS,
+    "min": UnitOfTime.MINUTES,
+}
+
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -164,6 +172,14 @@ async def async_setup_entry(
                     if "step" in prop:
                         config = config.copy()
                         config["step"] = float(prop["step"])
+                    # Zeit-Einheit aus der Firmware übernehmen: manche Pumpen
+                    # melden die Backwash-Dauer in Sekunden statt Minuten (#77).
+                    if (
+                        config.get("unit") in (UnitOfTime.MINUTES, UnitOfTime.SECONDS)
+                        and prop.get("unit") in DP_PROPERTY_TIME_UNITS
+                    ):
+                        config = config.copy()
+                        config["unit"] = DP_PROPERTY_TIME_UNITS[prop["unit"]]
                 except (json.JSONDecodeError, KeyError, ValueError) as ex:
                     LOGGER.warning(
                         "Failed to parse dpProperty for number entity: %s",
