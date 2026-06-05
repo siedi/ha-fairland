@@ -44,6 +44,7 @@
       "water_pump_mode": {
         "name": "Mode",
         "state": {
+          "auto_inverter": "Auto Inverter",
           "manual_inverter": "Manual Inverter",
           "backwash": "Backwash"
         }

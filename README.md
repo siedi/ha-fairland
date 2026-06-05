@@ -87,7 +87,7 @@ The integration creates a range of entities depending on the type of device disc
 * **Power switch** — turn the pump on/off
 * **Speed Setpoint** (number, 30-100%, slider) — target pump speed in Manual Inverter mode
 * **Backwash Duration** (number, 0-1440 minutes, configuration) — how long a backwash cycle should run
-* **Mode** (select: Manual Inverter / Backwash) — selecting **Backwash** starts a real backwash cycle on the pump
+* **Mode** (select) — the available modes (e.g. Auto Inverter / Manual Inverter / Backwash) are read from what your pump's firmware reports; selecting **Backwash** starts a real backwash cycle on the pump
 * **Current Power** (sensor, W) — instantaneous power draw
 * **Backwash Countdown** (sensor, minutes, diagnostic) — minutes remaining in the active backwash cycle
 * **Energy Consumption** (sensor, kWh, `TOTAL_INCREASING`) — cumulative energy, works directly with the Energy Dashboard
