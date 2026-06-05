@@ -9,5 +9,5 @@
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/siedi/ha-fairland/issues",
   "loggers": ["custom_components.fairland"],
-  "version": "0.4.1"
+  "version": "0.5.0"
 }
