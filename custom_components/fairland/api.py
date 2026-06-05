@@ -8,7 +8,7 @@ from typing import Any
 
 import aiohttp
 
-from .const import LOGGER
+from .const import API_REGIONS, DEFAULT_API_REGION, LOGGER
 
 
 class FairlandApiClientError(Exception):
@@ -48,15 +48,22 @@ class FairlandApiClient:
         session: aiohttp.ClientSession,
         country_code: str = "DE",
         phone_code: str = "49",
+        region: str = DEFAULT_API_REGION,
     ) -> None:
         """Initialize the API client."""
         self.username = username
         self.password = password
         self.country_code = country_code
         self.phone_code = phone_code
+        self.region = region
         self.token = None
         self.user_id = None
         self._session = session
+
+    @property
+    def base_url(self) -> str:
+        """Base URL of the configured regional API server."""
+        return API_REGIONS.get(self.region, API_REGIONS[DEFAULT_API_REGION])
 
     def _get_headers(self):
         """Get headers for API requests."""
@@ -136,14 +143,43 @@ class FairlandApiClient:
                 msg,
             ) from exception
 
+    async def detect_region(self) -> str:
+        """Find the regional server hosting this account.
+
+        Accounts exist on exactly one regional server and the region does
+        not follow the user's country (it is picked from the phone's
+        location when the account is registered in the app), so the only
+        reliable way to find it is to try each region until login succeeds.
+        """
+        last_auth_error: FairlandApiClientAuthenticationError | None = None
+        last_error: FairlandApiClientError | None = None
+
+        for region in API_REGIONS:
+            self.region = region
+            try:
+                await self.login()
+            except FairlandApiClientAuthenticationError as exception:
+                LOGGER.debug("No account on %s: %s", self.base_url, exception)
+                last_auth_error = exception
+            except FairlandApiClientError as exception:
+                LOGGER.debug("Could not reach %s: %s", self.base_url, exception)
+                last_error = exception
+            else:
+                LOGGER.debug("Account found on %s", self.base_url)
+                return region
+
+        # A region we could not reach makes the auth verdict inconclusive,
+        # so surface the communication error first.
+        raise last_error or last_auth_error
+
     async def login(self) -> Any:
         """Login to the Fairland API."""
-        url = "https://api-eu.fairlandiot.com/fyld-user-api/user/loginByPassword"
+        url = f"{self.base_url}/fyld-user-api/user/loginByPassword"
         payload = {
-            "phoneCode": "49",
+            "phoneCode": self.phone_code,
             "accountName": self.username,
             "password": self.password,
-            "countryCode": "DE",
+            "countryCode": self.country_code,
             "randStr": "",
             "ticket": "",
         }
@@ -159,8 +195,9 @@ class FairlandApiClient:
             raise FairlandApiClientAuthenticationError(f"Login failed: {code} {msg}")
 
         LOGGER.debug(
-            "Logging in as %s (phoneCode=%s, countryCode=%s)",
+            "Logging in as %s on %s (phoneCode=%s, countryCode=%s)",
             self.username,
+            self.base_url,
             payload["phoneCode"],
             payload["countryCode"],
         )
@@ -219,7 +256,7 @@ class FairlandApiClient:
         """Get courtyards."""
         return await self._api_wrapper(
             method="post",
-            url="https://api-eu.fairlandiot.com/fyld-device-api/deviceGroupApi/allGroupInfo",
+            url=f"{self.base_url}/fyld-device-api/deviceGroupApi/allGroupInfo",
             payload={
                 "needDeviceCount": True,
             },
@@ -229,7 +266,7 @@ class FairlandApiClient:
         """Get all devices in a courtyard."""
         data = await self._api_wrapper(
             method="post",
-            url="https://api-eu.fairlandiot.com/fyld-device-api/deviceApi/deviceAllGroupInfo",
+            url=f"{self.base_url}/fyld-device-api/deviceApi/deviceAllGroupInfo",
             payload={
                 "deviceGroupId": courtyard_id,
                 "shareId": None,
@@ -241,7 +278,7 @@ class FairlandApiClient:
         """Get device status."""
         return await self._api_wrapper(
             method="post",
-            url="https://api-eu.fairlandiot.com/fyld-device-api/deviceDataPointApi/deviceDataPointInfo",
+            url=f"{self.base_url}/fyld-device-api/deviceDataPointApi/deviceDataPointInfo",
             payload={
                 "deviceId": device_id,
             },
@@ -251,7 +288,7 @@ class FairlandApiClient:
         """Set device status."""
         return await self._api_wrapper(
             method="post",
-            url="https://api-eu.fairlandiot.com/fyld-device-api/devicePropertySetApi/set",
+            url=f"{self.base_url}/fyld-device-api/devicePropertySetApi/set",
             payload={
                 "deviceId": device_id,
                 "dpIdValues": [{"type": "", "dpId": dp_id, "value": value}],

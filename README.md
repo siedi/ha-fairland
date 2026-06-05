@@ -154,13 +154,15 @@ If you experience issues with the integration, first check the Home Assistant lo
 
 ### Login problems during setup
 
-If the setup dialog fails with an authentication or unknown error, the log contains a line like:
+The iGarden cloud runs several regional servers (EU, US, HK, CN) and your account exists on exactly one of them — decided by the app when the account was registered, not necessarily matching your country. The integration tries all regions automatically during setup, so you don't need to configure anything.
+
+If the setup dialog still fails with an authentication or unknown error, the log contains a line like:
 
 ```
 Login failed: <code> <message>
 ```
 
-(requires v0.3.3 or newer). Please include this line when opening an issue — the error code tells us exactly what the cloud rejected.
+(requires v0.3.3 or newer). Please include this line when opening an issue — the error code tells us exactly what the cloud rejected. Error `400000` on all regions means the credentials really don't match any iGarden account (note: SmartPool app accounts are a different system and not supported).
 
 ### Debug logging (integration already set up)
 

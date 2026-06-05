@@ -15,10 +15,11 @@ from homeassistant.loader import async_get_loaded_integration
 # from . import climate, sensor, switch
 from .api import (
     FairlandApiClient,
+    FairlandApiClientAuthenticationError,
     FairlandApiClientCommunicationError,
     FairlandApiClientError,
 )
-from .const import LOGGER
+from .const import CONF_API_REGION, DEFAULT_API_REGION, LOGGER
 from .coordinator import FairlandDataUpdateCoordinator
 from .data import FairlandData
 
@@ -52,6 +53,7 @@ async def async_setup_entry(
         password=config_entry.data[CONF_PASSWORD],
         session=async_get_clientsession(hass),
         country_code=config_entry.data.get("countryCode", "DE"),
+        region=config_entry.data.get(CONF_API_REGION, DEFAULT_API_REGION),
     )
 
     config_entry.runtime_data = FairlandData(
@@ -60,9 +62,25 @@ async def async_setup_entry(
         coordinator=coordinator,
     )
 
-    # Login
+    # Login. Entries created before the regional servers were known have no
+    # stored region; if their account is rejected, detect the region once
+    # and persist it.
     try:
         await apiClient.login()
+    except FairlandApiClientAuthenticationError as ex:
+        if CONF_API_REGION in config_entry.data:
+            LOGGER.exception("Failed to login: %s", ex)
+            return False
+        try:
+            region = await apiClient.detect_region()
+        except (FairlandApiClientCommunicationError, FairlandApiClientError) as ex2:
+            LOGGER.exception("Failed to login: %s", ex2)
+            return False
+        LOGGER.info("Account found on regional server '%s', saving it", region)
+        hass.config_entries.async_update_entry(
+            config_entry,
+            data={**config_entry.data, CONF_API_REGION: region},
+        )
     except (FairlandApiClientCommunicationError, FairlandApiClientError) as ex:
         LOGGER.exception("Failed to login: %s", ex)
         return False

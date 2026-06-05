@@ -15,13 +15,12 @@ from .api import (
     FairlandApiClientCommunicationError,
     FairlandApiClientError,
 )
-from .const import DEFAULT_SCAN_INTERVAL, DOMAIN, LOGGER
+from .const import CONF_API_REGION, DEFAULT_SCAN_INTERVAL, DOMAIN, LOGGER
 
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {
         vol.Required("accountName"): cv.string,
         vol.Required("password"): cv.string,
-        vol.Required("countryCode", default="DE"): cv.string,
         vol.Required("scan_interval", default=DEFAULT_SCAN_INTERVAL): cv.positive_int,
     }
 )
@@ -43,7 +42,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self.apiClient = None
         self.username = None
         self.password = None
-        self.country_code = None
+        self.api_region = None
         self.scan_interval = None
         self.courtyards = None
         self.selected_courtyard = None
@@ -59,17 +58,17 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             self.username = user_input["accountName"]
             self.password = user_input["password"]
-            self.country_code = user_input["countryCode"]
             self.scan_interval = user_input["scan_interval"]
 
             try:
                 self.apiClient = FairlandApiClient(
                     username=self.username,
                     password=self.password,
-                    country_code=self.country_code,
                     session=async_create_clientsession(self.hass),
                 )
-                await self.apiClient.login()
+                # Accounts live on one of several regional servers; try
+                # them all instead of asking the user (see const.API_REGIONS).
+                self.api_region = await self.apiClient.detect_region()
 
                 self.courtyards = await self.apiClient.get_courtyards()
 
@@ -132,7 +131,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     data={
                         "username": self.username,
                         "password": self.password,
-                        "countryCode": self.country_code,
+                        CONF_API_REGION: self.api_region,
                         "scan_interval": self.scan_interval,
                         "courtyard_id": selected_courtyard_id,
                         "courtyard_name": selected_courtyard["name"],

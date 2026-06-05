@@ -5,10 +5,9 @@
         "data": {
           "accountName": "Account E-Mail",
           "password": "Password",
-          "countryCode": "Country Code",
           "scan_interval": "Scan Interval (seconds)"
         },
-        "description": "Enter your Fairland iGarden app credentials. This integration supports Fairland pool heat pumps and pool pumps (including OEM-rebadged variants such as Madimack) and only works with the **iGarden app**, not the SmartPool app.",
+        "description": "Enter your Fairland iGarden app credentials. This integration supports Fairland pool heat pumps and pool pumps (including OEM-rebadged variants such as Madimack) and only works with the **iGarden app**, not the SmartPool app. Your account's server region (EU/US/HK/CN) is detected automatically.",
         "title": "Fairland (iGarden) Account Setup"
       },
       "courtyard": {
@@ -29,7 +28,7 @@
     },
     "error": {
       "cannot_connect": "Failed to connect to the Fairland API",
-      "invalid_auth": "Invalid credentials. Make sure you are using your iGarden app account (SmartPool accounts are not supported).",
+      "invalid_auth": "Invalid credentials (checked all regional servers). Make sure you are using your iGarden app account (SmartPool accounts are not supported).",
       "cannot_get_courtyards": "Failed to retrieve available courtyards",
       "devices_error": "Failed to retrieve devices from courtyard",
       "unknown": "Unexpected error"
