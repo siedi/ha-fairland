@@ -152,7 +152,7 @@ class FairlandWaterPumpModeSelect(FairlandEntity, SelectEntity):
                 self._int_to_option = _parse_mode_options(dp)
                 self._option_to_int = {v: k for k, v in self._int_to_option.items()}
                 self._attr_options = list(self._int_to_option.values())
-                raw = dp.get("dpValue")
+                raw = self._effective_dp_value(WATER_PUMP_MODE_DP_ID, dp.get("dpValue"))
                 try:
                     self._attr_current_option = self._int_to_option.get(int(raw))
                 except (TypeError, ValueError):
@@ -173,9 +173,13 @@ class FairlandWaterPumpModeSelect(FairlandEntity, SelectEntity):
                 WATER_PUMP_MODE_DP_ID,
                 target_int,
             )
+            # Optimistisch setzen; die Cloud meldet den neuen Wert erst nach
+            # 2-4 s zurück, ein sofortiger Refresh würde den alten Wert lesen
+            # und die UI zurückspringen lassen (#77).
+            self._note_pending_write(WATER_PUMP_MODE_DP_ID, target_int)
             self._attr_current_option = option
             self.async_write_ha_state()
-            await self.coordinator.async_request_refresh()
+            self._schedule_write_refresh()
         except (FairlandApiClientCommunicationError, FairlandApiClientError) as ex:
             LOGGER.error("Error setting mode: %s", ex)
 

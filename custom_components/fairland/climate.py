@@ -247,7 +247,9 @@ class FairlandClimate(FairlandEntity, ClimateEntity):
         if "dps" in self._device_info:
             for dp in self._device_info["dps"]:
                 dp_id = dp["dpId"]
-                value = dp["dpValue"]
+                # Pending Writes berücksichtigen: die Cloud meldet frisch
+                # geschriebene Werte erst nach 2-4 s zurück (#77).
+                value = self._effective_dp_value(dp_id, dp["dpValue"])
 
                 if dp_id == "101":  # Power switch
                     self._is_on = value
@@ -294,7 +296,10 @@ class FairlandClimate(FairlandEntity, ClimateEntity):
                         mode_value,
                     )
                 )
+                self._note_pending_write("102", mode_value)
                 self._attr_preset_mode = preset_mode
+                self.async_write_ha_state()
+                self._schedule_write_refresh()
             else:
                 LOGGER.error(f"Unknown preset mode: {preset_mode}")
         except (FairlandApiClientCommunicationError, FairlandApiClientError) as ex:
@@ -307,12 +312,16 @@ class FairlandClimate(FairlandEntity, ClimateEntity):
             return
 
         try:
+            raw_value = self._scale_write("107", temperature)
             await self.coordinator.config_entry.runtime_data.client.set_device_status(
                 self._device_id,
                 "107",  # Target temperature data point
-                self._scale_write("107", temperature),
+                raw_value,
             )
+            self._note_pending_write("107", raw_value)
             self._attr_target_temperature = temperature
+            self.async_write_ha_state()
+            self._schedule_write_refresh()
         except (FairlandApiClientCommunicationError, FairlandApiClientError) as ex:
             LOGGER.error("Error setting temperature: %s", ex)
 
@@ -337,7 +346,10 @@ class FairlandClimate(FairlandEntity, ClimateEntity):
                         mode_value,
                     )
                 )
+                self._note_pending_write("106", mode_value)
                 self._attr_hvac_mode = hvac_mode
+                self.async_write_ha_state()
+                self._schedule_write_refresh()
         except (FairlandApiClientCommunicationError, FairlandApiClientError) as ex:
             LOGGER.error("Error setting HVAC mode: %s", ex)
 
@@ -349,6 +361,7 @@ class FairlandClimate(FairlandEntity, ClimateEntity):
                 "101",  # Power switch data point
                 True,
             )
+            self._note_pending_write("101", True)
             self._is_on = True
 
             # Restore previous mode or set to AUTO
@@ -357,6 +370,8 @@ class FairlandClimate(FairlandEntity, ClimateEntity):
                 self._attr_hvac_mode = HVACMode.AUTO
             else:
                 self._attr_hvac_mode = last_mode
+            self.async_write_ha_state()
+            self._schedule_write_refresh()
         except (FairlandApiClientCommunicationError, FairlandApiClientError) as ex:
             LOGGER.error("Error turning on: %s", ex)
 
@@ -368,8 +383,11 @@ class FairlandClimate(FairlandEntity, ClimateEntity):
                 "101",  # Power switch data point
                 False,
             )
+            self._note_pending_write("101", False)
             self._is_on = False
             self._attr_hvac_mode = HVACMode.OFF
             self._attr_hvac_action = HVACAction.OFF
+            self.async_write_ha_state()
+            self._schedule_write_refresh()
         except (FairlandApiClientCommunicationError, FairlandApiClientError) as ex:
             LOGGER.error("Error turning off: %s", ex)

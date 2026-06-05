@@ -251,7 +251,9 @@ class FairlandNumber(FairlandEntity, NumberEntity):
         if "dps" in self._device_info:
             for dp in self._device_info["dps"]:
                 if dp["dpId"] == self._dp_id:
-                    self._attr_native_value = dp["dpValue"]
+                    self._attr_native_value = self._effective_dp_value(
+                        self._dp_id, dp["dpValue"]
+                    )
                     self._attr_available = True
                     return
 
@@ -272,11 +274,13 @@ class FairlandNumber(FairlandEntity, NumberEntity):
                 rounded_value,
             )
 
+            # Optimistisch setzen; die Cloud meldet den neuen Wert erst nach
+            # 2-4 s zurück, ein sofortiger Refresh würde den alten Wert lesen
+            # und die UI zurückspringen lassen (#77).
+            self._note_pending_write(self._dp_id, rounded_value)
             self._attr_native_value = rounded_value
             self.async_write_ha_state()
-
-            # Aktualisiere, um den neuen Zustand zu erhalten
-            await self.coordinator.async_request_refresh()
+            self._schedule_write_refresh()
         except (FairlandApiClientCommunicationError, FairlandApiClientError) as ex:
             LOGGER.error("Error setting value: %s", ex)
 

@@ -126,7 +126,9 @@ class FairlandSwitch(FairlandEntity, SwitchEntity):
         if "dps" in self._device_info:
             for dp in self._device_info["dps"]:
                 if dp["dpId"] == self._power_dp_id:
-                    self._is_on = dp["dpValue"]
+                    self._is_on = self._effective_dp_value(
+                        self._power_dp_id, dp["dpValue"]
+                    )
                     self._attr_available = True
                     return
 
@@ -170,11 +172,13 @@ class FairlandSwitch(FairlandEntity, SwitchEntity):
                 self._power_dp_id,
                 True,
             )
+            # Optimistisch setzen; die Cloud meldet den neuen Wert erst nach
+            # 2-4 s zurück, ein sofortiger Refresh würde den alten Wert lesen
+            # und die UI zurückspringen lassen (#77).
+            self._note_pending_write(self._power_dp_id, True)
             self._is_on = True
             self.async_write_ha_state()
-
-            # Request a refresh to get the updated state
-            await self.coordinator.async_request_refresh()
+            self._schedule_write_refresh()
         except (FairlandApiClientCommunicationError, FairlandApiClientError) as ex:
             LOGGER.error("Error turning on switch: %s", ex)
 
@@ -186,10 +190,9 @@ class FairlandSwitch(FairlandEntity, SwitchEntity):
                 self._power_dp_id,
                 False,
             )
+            self._note_pending_write(self._power_dp_id, False)
             self._is_on = False
             self.async_write_ha_state()
-
-            # Request a refresh to get the updated state
-            await self.coordinator.async_request_refresh()
+            self._schedule_write_refresh()
         except (FairlandApiClientCommunicationError, FairlandApiClientError) as ex:
             LOGGER.error("Error turning off switch: %s", ex)
