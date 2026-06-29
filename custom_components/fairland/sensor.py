@@ -12,6 +12,8 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.const import (
     PERCENTAGE,
+    UnitOfElectricCurrent,
+    UnitOfElectricPotential,
     UnitOfEnergy,
     UnitOfPower,
     UnitOfTemperature,
@@ -23,6 +25,8 @@ from .const import (
     DOMAIN,
     HEAT_PUMP_CATEGORY_CODE,
     LOGGER,
+    SALT_MACHINE_CATEGORY_CODE,
+    SAND_CYLINDER_CATEGORY_CODE,
     WATER_PUMP_CATEGORY_CODE,
 )
 from .entity import FairlandEntity
@@ -325,6 +329,172 @@ WATER_PUMP_SENSOR_TYPES = {
 }
 
 
+# Inverter salt chlorinator (saltMachine) read-only data points (issue #80).
+# dpProperty is the source of truth for scale, so the scale-from-property
+# path in async_setup_entry fills it in (pH and several electrical values
+# arrive as integers × 10). Enum points (`is_enum`) map their integer value
+# to the firmware-reported labels; the raw display point (128) is shown
+# verbatim as text.
+SALT_MACHINE_SENSOR_TYPES = {
+    "101": {
+        "name": "Salt Concentration",
+        "unit": "ppm",
+        "icon": "mdi:shaker-outline",
+        "device_class": None,
+        "state_class": SensorStateClass.MEASUREMENT,
+    },
+    "112": {
+        "name": "pH",
+        "unit": None,
+        "icon": "mdi:ph",
+        "device_class": SensorDeviceClass.PH,
+        "state_class": SensorStateClass.MEASUREMENT,
+    },
+    "111": {
+        "name": "ORP",
+        "unit": UnitOfElectricPotential.MILLIVOLT,
+        "icon": "mdi:test-tube",
+        "device_class": None,
+        "state_class": SensorStateClass.MEASUREMENT,
+    },
+    # dp 102 = pool water temperature (°C); dp 133 mirrors it in °F. dp 105 is
+    # the controller's internal/housing temperature.
+    "102": {
+        "name": "Pool Water Temperature",
+        "unit": UnitOfTemperature.CELSIUS,
+        "icon": "mdi:pool-thermometer",
+        "device_class": SensorDeviceClass.TEMPERATURE,
+        "state_class": SensorStateClass.MEASUREMENT,
+    },
+    "133": {
+        "name": "Pool Water Temperature (°F)",
+        "unit": UnitOfTemperature.FAHRENHEIT,
+        "icon": "mdi:pool-thermometer",
+        "device_class": SensorDeviceClass.TEMPERATURE,
+        "state_class": SensorStateClass.MEASUREMENT,
+        "entity_category": EntityCategory.DIAGNOSTIC,
+    },
+    "105": {
+        "name": "Controller Temperature",
+        "unit": UnitOfTemperature.CELSIUS,
+        "icon": "mdi:thermometer",
+        "device_class": SensorDeviceClass.TEMPERATURE,
+        "state_class": SensorStateClass.MEASUREMENT,
+        "entity_category": EntityCategory.DIAGNOSTIC,
+    },
+    "113": {
+        "name": "Chlorine Output",
+        "unit": PERCENTAGE,
+        "icon": "mdi:gauge",
+        "device_class": None,
+        "state_class": SensorStateClass.MEASUREMENT,
+    },
+    "124": {
+        "name": "Power",
+        "unit": UnitOfPower.WATT,
+        "icon": "mdi:flash",
+        "device_class": SensorDeviceClass.POWER,
+        "state_class": SensorStateClass.MEASUREMENT,
+    },
+    "106": {
+        "name": "Voltage",
+        "unit": UnitOfElectricPotential.VOLT,
+        "icon": "mdi:sine-wave",
+        "device_class": SensorDeviceClass.VOLTAGE,
+        "state_class": SensorStateClass.MEASUREMENT,
+        "entity_category": EntityCategory.DIAGNOSTIC,
+    },
+    "130": {
+        "name": "Current",
+        "unit": UnitOfElectricCurrent.AMPERE,
+        "icon": "mdi:current-ac",
+        "device_class": SensorDeviceClass.CURRENT,
+        "state_class": SensorStateClass.MEASUREMENT,
+        "entity_category": EntityCategory.DIAGNOSTIC,
+    },
+    "145": {
+        "name": "Runtime",
+        "unit": UnitOfTime.HOURS,
+        "icon": "mdi:timer-outline",
+        "device_class": SensorDeviceClass.DURATION,
+        "state_class": SensorStateClass.TOTAL_INCREASING,
+        "entity_category": EntityCategory.DIAGNOSTIC,
+    },
+    "119": {
+        "name": "Water Quality",
+        "unit": None,
+        "icon": "mdi:water-check",
+        "device_class": SensorDeviceClass.ENUM,
+        "state_class": None,
+        "is_enum": True,
+    },
+    "127": {
+        "name": "Active Profile",
+        "unit": None,
+        "icon": "mdi:cog-outline",
+        "device_class": SensorDeviceClass.ENUM,
+        "state_class": None,
+        "is_enum": True,
+        "entity_category": EntityCategory.DIAGNOSTIC,
+    },
+    "128": {
+        "name": "Display",
+        "unit": None,
+        "icon": "mdi:dock-window",
+        "device_class": None,
+        "state_class": None,
+        "entity_category": EntityCategory.DIAGNOSTIC,
+    },
+}
+
+
+# Multiport valve / sand-filter controller (sandCylinder, #80/#81). Names are
+# taken verbatim from the firmware's own nameLanguage (en-US). Pressures are
+# reported in MPa; HA has no MPa pressure unit, so they ride as a plain unit
+# string without a device_class. dp 107 carries English enum labels in its
+# dpProperty, so it maps via the generic is_enum path.
+SAND_CYLINDER_SENSOR_TYPES = {
+    "101": {
+        "name": "Water Temperature",
+        "unit": UnitOfTemperature.CELSIUS,
+        "icon": "mdi:thermometer-water",
+        "device_class": SensorDeviceClass.TEMPERATURE,
+        "state_class": SensorStateClass.MEASUREMENT,
+    },
+    "102": {
+        "name": "Pressure",
+        "unit": "MPa",
+        "icon": "mdi:gauge",
+        "device_class": None,
+        "state_class": SensorStateClass.MEASUREMENT,
+    },
+    "107": {
+        "name": "Valve Position",
+        "unit": None,
+        "icon": "mdi:pipe-valve",
+        "device_class": SensorDeviceClass.ENUM,
+        "state_class": None,
+        "is_enum": True,
+    },
+    "115": {
+        "name": "Timed Backwash Remaining",
+        "unit": UnitOfTime.DAYS,
+        "icon": "mdi:calendar-clock",
+        "device_class": SensorDeviceClass.DURATION,
+        "state_class": SensorStateClass.MEASUREMENT,
+        "entity_category": EntityCategory.DIAGNOSTIC,
+    },
+    "116": {
+        "name": "Rinse Countdown",
+        "unit": UnitOfTime.SECONDS,
+        "icon": "mdi:timer-sand",
+        "device_class": SensorDeviceClass.DURATION,
+        "state_class": SensorStateClass.MEASUREMENT,
+        "entity_category": EntityCategory.DIAGNOSTIC,
+    },
+}
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: FairlandConfigEntry,
@@ -345,6 +515,10 @@ async def async_setup_entry(
             sensor_types = HEAT_PUMP_SENSOR_TYPES
         elif category == WATER_PUMP_CATEGORY_CODE:
             sensor_types = WATER_PUMP_SENSOR_TYPES
+        elif category == SALT_MACHINE_CATEGORY_CODE:
+            sensor_types = SALT_MACHINE_SENSOR_TYPES
+        elif category == SAND_CYLINDER_CATEGORY_CODE:
+            sensor_types = SAND_CYLINDER_SENSOR_TYPES
         else:
             continue
 
@@ -381,6 +555,18 @@ async def async_setup_entry(
                     ):
                         sensor_config = sensor_config.copy()
                         sensor_config["unit"] = DP_PROPERTY_TIME_UNITS[prop["unit"]]
+                    # Enum-Sensoren: die Firmware liefert die Wert→Label-Map
+                    # direkt in dpProperty (z.B. {"0": "WAIT", "1": "GOOD"}).
+                    if sensor_config.get("is_enum"):
+                        enum_map = {
+                            str(k): str(v)
+                            for k, v in prop.items()
+                            if str(k).lstrip("-").isdigit()
+                        }
+                        if enum_map:
+                            sensor_config = sensor_config.copy()
+                            sensor_config["enum_map"] = enum_map
+                            sensor_config["options"] = list(enum_map.values())
                 except (json.JSONDecodeError, KeyError, ValueError) as ex:
                     LOGGER.warning(
                         "Failed to parse dpProperty for dp %s: %s", dp_id, ex
@@ -423,6 +609,9 @@ class FairlandSensor(FairlandEntity, SensorEntity):
         self._dp_id = dp_id
         self._sensor_config = sensor_config
         self._scale = sensor_config.get("scale", 0)
+        # Enum sensors map the raw integer value to a firmware label
+        # ({"0": "WAIT", ...}); when set, scaling is skipped.
+        self._enum_map = sensor_config.get("enum_map")
 
         # Set attributes based on sensor_config
         self._attr_name = sensor_config["name"]
@@ -432,6 +621,8 @@ class FairlandSensor(FairlandEntity, SensorEntity):
         self._attr_device_class = sensor_config.get("device_class")
         self._attr_state_class = sensor_config.get("state_class")
         self._attr_entity_category = sensor_config.get("entity_category")
+        if "options" in sensor_config:
+            self._attr_options = sensor_config["options"]
 
         # Device info
         self._attr_device_info = DeviceInfo(
@@ -457,6 +648,16 @@ class FairlandSensor(FairlandEntity, SensorEntity):
         """Return if entity is available."""
         return self.coordinator.last_update_success
 
+    def _present_value(self, value: Any) -> Any:
+        """Map a raw dpValue to its presented value (enum label or scaled)."""
+        if value is None:
+            return None
+        if self._enum_map is not None:
+            return self._enum_map.get(str(value), value)
+        if self._scale > 0:
+            return value / (10**self._scale)
+        return value
+
     def _update_state(self):
         """Update state from device data."""
         if "dps" in self._device_info:
@@ -464,28 +665,11 @@ class FairlandSensor(FairlandEntity, SensorEntity):
             dp_map = {item["dpId"]: item for item in self._device_info["dps"]}
 
             if self._dp_id in dp_map:
-                value = dp_map[self._dp_id]["dpValue"]
-
-                # Skalierung anwenden (z.B. für Leistung)
-                if self._scale > 0 and value is not None:
-                    value = value / (10**self._scale)
-
-                self._attr_native_value = value
+                self._attr_native_value = self._present_value(
+                    dp_map[self._dp_id]["dpValue"]
+                )
                 self._attr_available = True
                 return
-
-            # ist die logik nicht doppelt?!?!
-            for dp in self._device_info["dps"]:
-                if dp["dpId"] == self._dp_id:
-                    value = dp["dpValue"]
-
-                    # Skalierung anwenden
-                    if self._scale > 0 and value is not None:
-                        value = value / (10**self._scale)
-
-                    self._attr_native_value = value
-                    self._attr_available = True
-                    return
 
             # Wenn wir den Datenpunkt nicht gefunden haben
             LOGGER.warning(

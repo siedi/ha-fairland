@@ -31,3 +31,9 @@ CONF_API_REGION = "api_region"
 # pool pumps (Inverflow Plus and OEM-rebadged variants) don't share dpId maps.
 HEAT_PUMP_CATEGORY_CODE = "heatPump"
 WATER_PUMP_CATEGORY_CODE = "waterPump"
+# Inverter salt chlorinator (Fairland i-Salt and OEM rebrands, issue #80).
+# A wholly separate dpId namespace from heat/water pumps.
+SALT_MACHINE_CATEGORY_CODE = "saltMachine"
+# Multiport valve / sand-filter controller (MPV, issue #80/#81). Again its
+# own dpId namespace.
+SAND_CYLINDER_CATEGORY_CODE = "sandCylinder"

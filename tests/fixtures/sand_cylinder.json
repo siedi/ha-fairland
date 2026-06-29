@@ -1,0 +1,176 @@
+{
+  "id": "1000000000000000003",
+  "deviceName": "Test MPV",
+  "categoryCode": "sandCylinder",
+  "version": null,
+  "dps": [
+    {
+      "dpId": "101",
+      "dpValue": 141,
+      "dpProperty": "{\"max\": 1200, \"min\": -300, \"init\": \"0\", \"step\": \"1\", \"unit\": \"℃\", \"scale\": 1}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "102",
+      "dpValue": 17,
+      "dpProperty": "{\"max\": 600, \"min\": \"0\", \"init\": \"0\", \"step\": \"1\", \"unit\": \"Mpa\", \"scale\": 3}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "103",
+      "dpValue": 50,
+      "dpProperty": "{\"max\": 600, \"min\": \"0\", \"init\": \"0\", \"step\": \"1\", \"unit\": \"Mpa\", \"scale\": 3}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "104",
+      "dpValue": 250,
+      "dpProperty": "{\"max\": 600, \"min\": \"0\", \"init\": \"0\", \"step\": \"1\", \"unit\": \"Mpa\", \"scale\": 3}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "105",
+      "dpValue": 200,
+      "dpProperty": "{\"max\": 2500, \"min\": 0, \"init\": 50, \"step\": 1, \"unit\": \"Mpa\", \"scale\": 3}",
+      "dpMode": "rw",
+      "dpType": "value"
+    },
+    {
+      "dpId": "106",
+      "dpValue": 0,
+      "dpProperty": "{\"0\": \"无动作\", \"1\": \"一键冲洗（反冲洗+正冲洗)\", \"2\": \"切换到循环位置\", \"3\": \"切换到关闭位置\", \"4\": \"切换到过滤位置\", \"5\": \"切换到排污位置\"}",
+      "dpMode": "rw",
+      "dpType": "enum"
+    },
+    {
+      "dpId": "107",
+      "dpValue": 6,
+      "dpProperty": "{\"0\": \"Undetermined\", \"1\": \"Backwash\", \"2\": \"RECIRC\", \"3\": \"Washing\", \"4\": \"CLOSED\", \"5\": \"WASTE\", \"6\": \"FILTER\", \"7\": \"valve rotation\"}",
+      "dpMode": "ro",
+      "dpType": "enum"
+    },
+    {
+      "dpId": "108",
+      "dpValue": 5,
+      "dpProperty": "{\"max\": 5, \"min\": 0, \"init\": 2, \"step\": 1, \"unit\": \"℃\", \"scale\": \"0\"}",
+      "dpMode": "rw",
+      "dpType": "value"
+    },
+    {
+      "dpId": "109",
+      "dpValue": 7,
+      "dpProperty": "{\"max\": 30, \"min\": \"0\", \"init\": \"0\", \"step\": \"1\", \"unit\": \"day\", \"scale\": \"0\"}",
+      "dpMode": "rw",
+      "dpType": "value"
+    },
+    {
+      "dpId": "110",
+      "dpValue": 1000,
+      "dpProperty": "{\"max\": 2359, \"min\": \"0\", \"init\": \"0\", \"step\": \"1\", \"unit\": \"\", \"scale\": \"0\"}",
+      "dpMode": "rw",
+      "dpType": "value"
+    },
+    {
+      "dpId": "111",
+      "dpValue": 3,
+      "dpProperty": "{\"max\": 25, \"min\": 1, \"init\": 1, \"step\": 1, \"unit\": \"min\", \"scale\": \"0\"}",
+      "dpMode": "rw",
+      "dpType": "value"
+    },
+    {
+      "dpId": "112",
+      "dpValue": 30,
+      "dpProperty": "{\"max\": 50, \"min\": 10, \"init\": 10, \"step\": 1, \"unit\": \"%\", \"scale\": \"0\"}",
+      "dpMode": "rw",
+      "dpType": "value"
+    },
+    {
+      "dpId": "113",
+      "dpValue": 100,
+      "dpProperty": "{\"max\": 100, \"min\": 60, \"init\": 60, \"step\": 5, \"unit\": \"%\", \"scale\": \"0\"}",
+      "dpMode": "rw",
+      "dpType": "value"
+    },
+    {
+      "dpId": "114",
+      "dpValue": 0,
+      "dpProperty": "{\"max\": 2359, \"min\": \"0\", \"init\": \"0\", \"step\": \"1\", \"unit\": \"\", \"scale\": \"0\"}",
+      "dpMode": "rw",
+      "dpType": "value"
+    },
+    {
+      "dpId": "115",
+      "dpValue": 5,
+      "dpProperty": "{\"max\": 30, \"min\": \"0\", \"init\": \"0\", \"step\": \"1\", \"unit\": \"day\", \"scale\": \"0\"}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "116",
+      "dpValue": 0,
+      "dpProperty": "{\"max\": 2550, \"min\": \"0\", \"init\": \"0\", \"step\": \"1\", \"unit\": \"s\", \"scale\": \"0\"}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "118",
+      "dpValue": 3,
+      "dpProperty": "{\"0\": \"Mpa\", \"1\": \"Kpa\", \"2\": \"Psi\", \"3\": \"bar\"}",
+      "dpMode": "rw",
+      "dpType": "enum"
+    },
+    {
+      "dpId": "119",
+      "dpValue": 0,
+      "dpProperty": "{\"max\": 2147483647, \"min\": -2147483647, \"init\": 0, \"step\": 1, \"unit\": \"\", \"scale\": \"0\"}",
+      "dpMode": "rw",
+      "dpType": "value"
+    },
+    {
+      "dpId": "120",
+      "dpValue": 0,
+      "dpProperty": "{\"0\": \"0-控制水泵\", \"1\": \"1-485-modbus\"}",
+      "dpMode": "rw",
+      "dpType": "enum"
+    },
+    {
+      "dpId": "121",
+      "dpValue": 0,
+      "dpProperty": "{\"0\": \"变频泵\", \"1\": \"定速泵\", \"2\": \"DI控制变速泵\"}",
+      "dpMode": "ro",
+      "dpType": "enum"
+    },
+    {
+      "dpId": "122",
+      "dpValue": null,
+      "dpProperty": "{\"maxlen\": 2048}",
+      "dpMode": "rw",
+      "dpType": "string"
+    },
+    {
+      "dpId": "123",
+      "dpValue": 1,
+      "dpProperty": "{\"0\": \"禁止温度检测\", \"1\": \"检测摄氏温度\", \"2\": \"检测华氏温度\"}",
+      "dpMode": "rw",
+      "dpType": "enum"
+    },
+    {
+      "dpId": "124",
+      "dpValue": 70449,
+      "dpProperty": "{\"max\": 2147483647, \"min\": \"0\", \"init\": \"0\", \"step\": \"1\", \"unit\": \"\", \"scale\": \"0\"}",
+      "dpMode": "rw",
+      "dpType": "value"
+    },
+    {
+      "dpId": "125",
+      "dpValue": 0,
+      "dpProperty": "{\"0\": \"无\", \"1\": \"开启水泵\", \"2\": \"关闭水泵\"}",
+      "dpMode": "rw",
+      "dpType": "enum"
+    }
+  ]
+}

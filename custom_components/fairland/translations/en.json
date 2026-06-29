@@ -48,6 +48,58 @@
           "manual_inverter": "Manual Inverter",
           "backwash": "Backwash"
         }
+      },
+      "salt_machine_mode": {
+        "name": "Mode",
+        "state": {
+          "inverter": "Inverter",
+          "auto_ph": "Auto pH",
+          "manual": "Manual"
+        }
+      },
+      "salt_polarity_reversal": {
+        "name": "Polarity Reversal Interval",
+        "state": {
+          "2_hours": "Every 2 hours",
+          "4_hours": "Every 4 hours",
+          "6_hours": "Every 6 hours"
+        }
+      },
+      "sand_cylinder_mode": {
+        "name": "Mode",
+        "state": {
+          "no_movement": "No movement",
+          "one_touch_rinse": "One-touch rinse",
+          "recirc": "Recirculate",
+          "closed": "Closed",
+          "filter": "Filter",
+          "waste": "Waste"
+        }
+      },
+      "sand_cylinder_pump_control": {
+        "name": "Pump Control",
+        "state": {
+          "none": "No action",
+          "pump_on": "Turn pump on",
+          "pump_off": "Turn pump off"
+        }
+      },
+      "sand_cylinder_pressure_unit": {
+        "name": "Pressure Unit",
+        "state": {
+          "mpa": "MPa",
+          "kpa": "kPa",
+          "psi": "psi",
+          "bar": "bar"
+        }
+      },
+      "sand_cylinder_temp_detection": {
+        "name": "Temperature Detection",
+        "state": {
+          "off": "Off",
+          "celsius": "Celsius",
+          "fahrenheit": "Fahrenheit"
+        }
       }
     }
   }

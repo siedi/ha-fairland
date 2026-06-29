@@ -1,0 +1,3 @@
+# Test dependencies. The stub-based suite under tests/ does not import Home
+# Assistant (see tests/conftest.py), so pytest is all that is needed.
+pytest==9.1.1

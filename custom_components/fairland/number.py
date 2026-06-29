@@ -5,8 +5,17 @@ from __future__ import annotations
 import json
 from typing import TYPE_CHECKING, Any
 
-from homeassistant.components.number import NumberEntity, NumberMode
-from homeassistant.const import PERCENTAGE, UnitOfTemperature, UnitOfTime
+from homeassistant.components.number import (
+    NumberDeviceClass,
+    NumberEntity,
+    NumberMode,
+)
+from homeassistant.const import (
+    PERCENTAGE,
+    UnitOfElectricPotential,
+    UnitOfTemperature,
+    UnitOfTime,
+)
 from homeassistant.helpers.entity import DeviceInfo, EntityCategory
 
 from .api import FairlandApiClientCommunicationError, FairlandApiClientError
@@ -14,6 +23,8 @@ from .const import (
     DOMAIN,
     HEAT_PUMP_CATEGORY_CODE,
     LOGGER,
+    SALT_MACHINE_CATEGORY_CODE,
+    SAND_CYLINDER_CATEGORY_CODE,
     WATER_PUMP_CATEGORY_CODE,
 )
 from .entity import FairlandEntity
@@ -116,6 +127,130 @@ WATER_PUMP_NUMBER_TYPES = {
     },
 }
 
+# Inverter salt chlorinator (saltMachine) writable setpoints (issue #80).
+# min/max/step are overridden from each device's dpProperty below, so the
+# defaults here are only fallbacks. pH (dp 110) arrives as an integer × 10,
+# so it opts into dpProperty scaling (`scale_from_property`) to read and
+# write in real pH units.
+SALT_MACHINE_NUMBER_TYPES = {
+    "110": {
+        "name": "pH Setpoint",
+        "unit": None,
+        "icon": "mdi:ph",
+        "device_class": NumberDeviceClass.PH,
+        "min": 6.5,
+        "max": 8.5,
+        "step": 0.1,
+        "mode": NumberMode.BOX,
+        "scale_from_property": True,
+    },
+    "108": {
+        "name": "ORP Setpoint",
+        "unit": UnitOfElectricPotential.MILLIVOLT,
+        "icon": "mdi:test-tube",
+        "min": 200,
+        "max": 850,
+        "step": 10,
+        "mode": NumberMode.SLIDER,
+    },
+    "125": {
+        "name": "Target Chlorine Output",
+        "unit": PERCENTAGE,
+        "icon": "mdi:gauge",
+        "min": 0,
+        "max": 130,
+        "step": 5,
+        "mode": NumberMode.SLIDER,
+    },
+    "109": {
+        "name": "Pool Volume",
+        "unit": "m³",
+        "icon": "mdi:pool",
+        "min": 5,
+        "max": 100,
+        "step": 5,
+        "mode": NumberMode.BOX,
+        "entity_category": EntityCategory.CONFIG,
+    },
+    "126": {
+        "name": "Acid Dosing Rate",
+        "unit": "ml/day",
+        "icon": "mdi:eyedropper",
+        "min": 0,
+        "max": 9990,
+        "step": 10,
+        "mode": NumberMode.BOX,
+        "entity_category": EntityCategory.CONFIG,
+    },
+}
+
+
+# Multiport valve / sand-filter controller (sandCylinder, #80/#81) writable
+# setpoints. Names from the firmware nameLanguage (en-US). min/max/step come
+# from each device's dpProperty; the trigger pressure (dp 105) arrives in MPa
+# as an integer × 1000, so it opts into dpProperty scaling.
+SAND_CYLINDER_NUMBER_TYPES = {
+    "105": {
+        "name": "Backwash Trigger Pressure",
+        "unit": "MPa",
+        "icon": "mdi:gauge",
+        "min": 0,
+        "max": 2.5,
+        "step": 0.001,
+        "mode": NumberMode.BOX,
+        "scale_from_property": True,
+    },
+    "108": {
+        "name": "Low Temperature Protection",
+        "unit": UnitOfTemperature.CELSIUS,
+        "icon": "mdi:snowflake-thermometer",
+        "min": 0,
+        "max": 5,
+        "step": 1,
+        "mode": NumberMode.BOX,
+        "entity_category": EntityCategory.CONFIG,
+    },
+    "109": {
+        "name": "Timed Backwash Interval",
+        "unit": UnitOfTime.DAYS,
+        "icon": "mdi:calendar-refresh",
+        "min": 0,
+        "max": 30,
+        "step": 1,
+        "mode": NumberMode.BOX,
+        "entity_category": EntityCategory.CONFIG,
+    },
+    "111": {
+        "name": "Backwash Duration",
+        "unit": UnitOfTime.MINUTES,
+        "icon": "mdi:timer-sand",
+        "min": 1,
+        "max": 25,
+        "step": 1,
+        "mode": NumberMode.BOX,
+    },
+    "112": {
+        "name": "Washing Time Ratio",
+        "unit": PERCENTAGE,
+        "icon": "mdi:percent",
+        "min": 10,
+        "max": 50,
+        "step": 1,
+        "mode": NumberMode.SLIDER,
+        "entity_category": EntityCategory.CONFIG,
+    },
+    "113": {
+        "name": "VS Pump Backwash Speed",
+        "unit": PERCENTAGE,
+        "icon": "mdi:speedometer",
+        "min": 60,
+        "max": 100,
+        "step": 5,
+        "mode": NumberMode.SLIDER,
+    },
+}
+
+
 # Firmware-reported time units (dpProperty "unit") we trust to override a
 # default time unit: the backwash duration comes in seconds on some pumps
 # (e.g. InverFlow(L), issue #77) and minutes on others.
@@ -142,6 +277,10 @@ async def async_setup_entry(
             number_types = HEAT_PUMP_NUMBER_TYPES
         elif category == WATER_PUMP_CATEGORY_CODE:
             number_types = WATER_PUMP_NUMBER_TYPES
+        elif category == SALT_MACHINE_CATEGORY_CODE:
+            number_types = SALT_MACHINE_NUMBER_TYPES
+        elif category == SAND_CYLINDER_CATEGORY_CODE:
+            number_types = SAND_CYLINDER_NUMBER_TYPES
         else:
             continue
 
@@ -162,16 +301,25 @@ async def async_setup_entry(
             if "dpProperty" in dp_map[dp_id]:
                 try:
                     prop = json.loads(dp_map[dp_id]["dpProperty"])
+                    # Manche Werte kommen als Integer × 10^scale (z.B. der
+                    # pH-Sollwert mit scale=1). dpProperty min/max/step liegen
+                    # dann ebenfalls im rohen Raum, also alle herunterskalieren.
+                    factor = 1.0
+                    if config.get("scale_from_property") and int(prop.get("scale", 0)):
+                        scale = int(prop["scale"])
+                        factor = 10**scale
+                        config = config.copy()
+                        config["scale"] = scale
                     # Aktualisiere min/max/step basierend auf den tatsächlichen Geräteeigenschaften
                     if "min" in prop:
                         config = config.copy()
-                        config["min"] = float(prop["min"])
+                        config["min"] = float(prop["min"]) / factor
                     if "max" in prop:
                         config = config.copy()
-                        config["max"] = float(prop["max"])
+                        config["max"] = float(prop["max"]) / factor
                     if "step" in prop:
                         config = config.copy()
-                        config["step"] = float(prop["step"])
+                        config["step"] = float(prop["step"]) / factor
                     # Zeit-Einheit aus der Firmware übernehmen: manche Pumpen
                     # melden die Backwash-Dauer in Sekunden statt Minuten (#77).
                     if (
@@ -217,12 +365,16 @@ class FairlandNumber(FairlandEntity, NumberEntity):
         self._device_id = device_info["id"]
         self._dp_id = dp_id
         self._config = config
+        # Firmware reports/accepts the raw integer value × 10^scale (e.g. pH
+        # as 74 for 7.4); 0 means the value is already in display units.
+        self._scale = config.get("scale", 0)
 
         # Set attributes based on config
         self._attr_name = config["name"]
         self._attr_unique_id = f"{DOMAIN}_{self._device_id}_{dp_id}_control"
         self._attr_native_unit_of_measurement = config.get("unit")
         self._attr_icon = config.get("icon")
+        self._attr_device_class = config.get("device_class")
         self._attr_entity_category = config.get("entity_category")
         self._attr_native_min_value = config["min"]
         self._attr_native_max_value = config["max"]
@@ -251,9 +403,10 @@ class FairlandNumber(FairlandEntity, NumberEntity):
         if "dps" in self._device_info:
             for dp in self._device_info["dps"]:
                 if dp["dpId"] == self._dp_id:
-                    self._attr_native_value = self._effective_dp_value(
-                        self._dp_id, dp["dpValue"]
-                    )
+                    value = self._effective_dp_value(self._dp_id, dp["dpValue"])
+                    if self._scale > 0 and value is not None:
+                        value = value / (10**self._scale)
+                    self._attr_native_value = value
                     self._attr_available = True
                     return
 
@@ -262,23 +415,29 @@ class FairlandNumber(FairlandEntity, NumberEntity):
     async def async_set_native_value(self, value: float) -> None:
         """Set new value."""
         try:
-            # Runde den Wert basierend auf dem Step
-            if self._attr_native_step.is_integer():
-                rounded_value = int(round(value))
+            # Scaled values (e.g. pH 7.4) go to the firmware as the raw
+            # integer (74); unscaled values round to the step granularity.
+            if self._scale > 0:
+                raw_value = int(round(value * (10**self._scale)))
+            elif self._attr_native_step.is_integer():
+                raw_value = int(round(value))
             else:
-                rounded_value = round(value, 2)
+                raw_value = round(value, 2)
 
             await self.coordinator.config_entry.runtime_data.client.set_device_status(
                 self._device_id,
                 self._dp_id,
-                rounded_value,
+                raw_value,
             )
 
             # Optimistisch setzen; die Cloud meldet den neuen Wert erst nach
             # 2-4 s zurück, ein sofortiger Refresh würde den alten Wert lesen
-            # und die UI zurückspringen lassen (#77).
-            self._note_pending_write(self._dp_id, rounded_value)
-            self._attr_native_value = rounded_value
+            # und die UI zurückspringen lassen (#77). Pending-Vergleich läuft
+            # über den rohen Wert, die Anzeige über den skalierten.
+            self._note_pending_write(self._dp_id, raw_value)
+            self._attr_native_value = (
+                raw_value / (10**self._scale) if self._scale > 0 else raw_value
+            )
             self.async_write_ha_state()
             self._schedule_write_refresh()
         except (FairlandApiClientCommunicationError, FairlandApiClientError) as ex:
