@@ -18,7 +18,7 @@ import json
 from typing import TYPE_CHECKING, Any
 
 from homeassistant.components.select import SelectEntity
-from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.helpers.entity import DeviceInfo, EntityCategory
 from homeassistant.util import slugify
 
 from .api import FairlandApiClientCommunicationError, FairlandApiClientError
@@ -26,6 +26,7 @@ from .const import (
     DOMAIN,
     LOGGER,
     SALT_MACHINE_CATEGORY_CODE,
+    SAND_CYLINDER_CATEGORY_CODE,
     WATER_PUMP_CATEGORY_CODE,
 )
 from .entity import FairlandEntity
@@ -83,6 +84,60 @@ SALT_MACHINE_SELECT_TYPES: dict[str, dict[str, Any]] = {
         },
     },
 }
+
+
+# Multiport valve / sand-filter controller (sandCylinder, #80/#81) enum
+# controls. Their dpProperty labels are localized (Chinese on this firmware),
+# so they map by the integer key via `int_to_option` rather than by label.
+# Option names taken from the firmware's own en-US propNameLanguage.
+SAND_CYLINDER_SELECT_TYPES: dict[str, dict[str, Any]] = {
+    "106": {
+        "translation_key": "sand_cylinder_mode",
+        "icon": "mdi:valve",
+        "int_to_option": {
+            0: "no_movement",
+            1: "one_touch_rinse",
+            2: "recirc",
+            3: "closed",
+            4: "filter",
+            5: "waste",
+        },
+    },
+    "125": {
+        "translation_key": "sand_cylinder_pump_control",
+        "icon": "mdi:water-pump",
+        "int_to_option": {0: "none", 1: "pump_on", 2: "pump_off"},
+    },
+    "118": {
+        "translation_key": "sand_cylinder_pressure_unit",
+        "icon": "mdi:gauge",
+        "entity_category": EntityCategory.CONFIG,
+        "int_to_option": {0: "mpa", 1: "kpa", 2: "psi", 3: "bar"},
+    },
+    "123": {
+        "translation_key": "sand_cylinder_temp_detection",
+        "icon": "mdi:thermometer",
+        "entity_category": EntityCategory.CONFIG,
+        "int_to_option": {0: "off", 1: "celsius", 2: "fahrenheit"},
+    },
+}
+
+
+def _enum_int_keys(dp: dict[str, Any]) -> set[int]:
+    """Return the set of integer enum keys advertised in a dp's dpProperty."""
+    try:
+        prop = json.loads(dp.get("dpProperty") or "")
+    except (TypeError, ValueError):
+        return set()
+    if not isinstance(prop, dict):
+        return set()
+    keys: set[int] = set()
+    for raw_value in prop:
+        try:
+            keys.add(int(raw_value))
+        except (TypeError, ValueError):
+            continue
+    return keys
 
 
 def _parse_enum_options(
@@ -155,9 +210,14 @@ async def async_setup_entry(
                         device_info=device_info,
                     )
                 )
-        elif category == SALT_MACHINE_CATEGORY_CODE:
+        elif category in (SALT_MACHINE_CATEGORY_CODE, SAND_CYLINDER_CATEGORY_CODE):
+            select_types = (
+                SALT_MACHINE_SELECT_TYPES
+                if category == SALT_MACHINE_CATEGORY_CODE
+                else SAND_CYLINDER_SELECT_TYPES
+            )
             dp_ids = {dp.get("dpId") for dp in device_info["dps"]}
-            for dp_id, config in SALT_MACHINE_SELECT_TYPES.items():
+            for dp_id, config in select_types.items():
                 if dp_id not in dp_ids:
                     continue
                 entities.append(
@@ -287,11 +347,15 @@ class FairlandDpSelect(FairlandEntity, SelectEntity):
         self._device_id = device_info["id"]
         self._dp_id = dp_id
         self._label_to_option = config.get("label_to_option", {})
+        # When given, the enum is mapped by its integer key (firmware labels
+        # may be localized); otherwise it is parsed from the dpProperty labels.
+        self._int_to_option_override = config.get("int_to_option")
         self._int_to_option: dict[int, str] = {}
         self._option_to_int: dict[str, int] = {}
 
         self._attr_icon = config.get("icon")
         self._attr_translation_key = config.get("translation_key")
+        self._attr_entity_category = config.get("entity_category")
         self._attr_unique_id = f"{DOMAIN}_{self._device_id}_select_{dp_id}"
 
         self._attr_device_info = DeviceInfo(
@@ -315,7 +379,15 @@ class FairlandDpSelect(FairlandEntity, SelectEntity):
             return
         for dp in self._device_info["dps"]:
             if dp["dpId"] == self._dp_id:
-                self._int_to_option = _parse_enum_options(dp, self._label_to_option)
+                if self._int_to_option_override is not None:
+                    valid = _enum_int_keys(dp)
+                    self._int_to_option = {
+                        i: opt
+                        for i, opt in self._int_to_option_override.items()
+                        if not valid or i in valid
+                    }
+                else:
+                    self._int_to_option = _parse_enum_options(dp, self._label_to_option)
                 self._option_to_int = {v: k for k, v in self._int_to_option.items()}
                 self._attr_options = list(self._int_to_option.values())
                 raw = self._effective_dp_value(self._dp_id, dp.get("dpValue"))

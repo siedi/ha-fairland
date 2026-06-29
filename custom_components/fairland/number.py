@@ -24,6 +24,7 @@ from .const import (
     HEAT_PUMP_CATEGORY_CODE,
     LOGGER,
     SALT_MACHINE_CATEGORY_CODE,
+    SAND_CYLINDER_CATEGORY_CODE,
     WATER_PUMP_CATEGORY_CODE,
 )
 from .entity import FairlandEntity
@@ -184,6 +185,72 @@ SALT_MACHINE_NUMBER_TYPES = {
 }
 
 
+# Multiport valve / sand-filter controller (sandCylinder, #80/#81) writable
+# setpoints. Names from the firmware nameLanguage (en-US). min/max/step come
+# from each device's dpProperty; the trigger pressure (dp 105) arrives in MPa
+# as an integer × 1000, so it opts into dpProperty scaling.
+SAND_CYLINDER_NUMBER_TYPES = {
+    "105": {
+        "name": "Backwash Trigger Pressure",
+        "unit": "MPa",
+        "icon": "mdi:gauge",
+        "min": 0,
+        "max": 2.5,
+        "step": 0.001,
+        "mode": NumberMode.BOX,
+        "scale_from_property": True,
+    },
+    "108": {
+        "name": "Low Temperature Protection",
+        "unit": UnitOfTemperature.CELSIUS,
+        "icon": "mdi:snowflake-thermometer",
+        "min": 0,
+        "max": 5,
+        "step": 1,
+        "mode": NumberMode.BOX,
+        "entity_category": EntityCategory.CONFIG,
+    },
+    "109": {
+        "name": "Timed Backwash Interval",
+        "unit": UnitOfTime.DAYS,
+        "icon": "mdi:calendar-refresh",
+        "min": 0,
+        "max": 30,
+        "step": 1,
+        "mode": NumberMode.BOX,
+        "entity_category": EntityCategory.CONFIG,
+    },
+    "111": {
+        "name": "Backwash Duration",
+        "unit": UnitOfTime.MINUTES,
+        "icon": "mdi:timer-sand",
+        "min": 1,
+        "max": 25,
+        "step": 1,
+        "mode": NumberMode.BOX,
+    },
+    "112": {
+        "name": "Washing Time Ratio",
+        "unit": PERCENTAGE,
+        "icon": "mdi:percent",
+        "min": 10,
+        "max": 50,
+        "step": 1,
+        "mode": NumberMode.SLIDER,
+        "entity_category": EntityCategory.CONFIG,
+    },
+    "113": {
+        "name": "VS Pump Backwash Speed",
+        "unit": PERCENTAGE,
+        "icon": "mdi:speedometer",
+        "min": 60,
+        "max": 100,
+        "step": 5,
+        "mode": NumberMode.SLIDER,
+    },
+}
+
+
 # Firmware-reported time units (dpProperty "unit") we trust to override a
 # default time unit: the backwash duration comes in seconds on some pumps
 # (e.g. InverFlow(L), issue #77) and minutes on others.
@@ -212,6 +279,8 @@ async def async_setup_entry(
             number_types = WATER_PUMP_NUMBER_TYPES
         elif category == SALT_MACHINE_CATEGORY_CODE:
             number_types = SALT_MACHINE_NUMBER_TYPES
+        elif category == SAND_CYLINDER_CATEGORY_CODE:
+            number_types = SAND_CYLINDER_NUMBER_TYPES
         else:
             continue
 

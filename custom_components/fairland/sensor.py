@@ -26,6 +26,7 @@ from .const import (
     HEAT_PUMP_CATEGORY_CODE,
     LOGGER,
     SALT_MACHINE_CATEGORY_CODE,
+    SAND_CYLINDER_CATEGORY_CODE,
     WATER_PUMP_CATEGORY_CODE,
 )
 from .entity import FairlandEntity
@@ -447,6 +448,53 @@ SALT_MACHINE_SENSOR_TYPES = {
 }
 
 
+# Multiport valve / sand-filter controller (sandCylinder, #80/#81). Names are
+# taken verbatim from the firmware's own nameLanguage (en-US). Pressures are
+# reported in MPa; HA has no MPa pressure unit, so they ride as a plain unit
+# string without a device_class. dp 107 carries English enum labels in its
+# dpProperty, so it maps via the generic is_enum path.
+SAND_CYLINDER_SENSOR_TYPES = {
+    "101": {
+        "name": "Water Temperature",
+        "unit": UnitOfTemperature.CELSIUS,
+        "icon": "mdi:thermometer-water",
+        "device_class": SensorDeviceClass.TEMPERATURE,
+        "state_class": SensorStateClass.MEASUREMENT,
+    },
+    "102": {
+        "name": "Pressure",
+        "unit": "MPa",
+        "icon": "mdi:gauge",
+        "device_class": None,
+        "state_class": SensorStateClass.MEASUREMENT,
+    },
+    "107": {
+        "name": "Valve Position",
+        "unit": None,
+        "icon": "mdi:pipe-valve",
+        "device_class": SensorDeviceClass.ENUM,
+        "state_class": None,
+        "is_enum": True,
+    },
+    "115": {
+        "name": "Timed Backwash Remaining",
+        "unit": UnitOfTime.DAYS,
+        "icon": "mdi:calendar-clock",
+        "device_class": SensorDeviceClass.DURATION,
+        "state_class": SensorStateClass.MEASUREMENT,
+        "entity_category": EntityCategory.DIAGNOSTIC,
+    },
+    "116": {
+        "name": "Rinse Countdown",
+        "unit": UnitOfTime.SECONDS,
+        "icon": "mdi:timer-sand",
+        "device_class": SensorDeviceClass.DURATION,
+        "state_class": SensorStateClass.MEASUREMENT,
+        "entity_category": EntityCategory.DIAGNOSTIC,
+    },
+}
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: FairlandConfigEntry,
@@ -469,6 +517,8 @@ async def async_setup_entry(
             sensor_types = WATER_PUMP_SENSOR_TYPES
         elif category == SALT_MACHINE_CATEGORY_CODE:
             sensor_types = SALT_MACHINE_SENSOR_TYPES
+        elif category == SAND_CYLINDER_CATEGORY_CODE:
+            sensor_types = SAND_CYLINDER_SENSOR_TYPES
         else:
             continue
 
