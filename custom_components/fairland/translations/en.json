@@ -48,6 +48,22 @@
           "manual_inverter": "Manual Inverter",
           "backwash": "Backwash"
         }
+      },
+      "salt_machine_mode": {
+        "name": "Mode",
+        "state": {
+          "inverter": "Inverter",
+          "auto_ph": "Auto pH",
+          "manual": "Manual"
+        }
+      },
+      "salt_polarity_reversal": {
+        "name": "Polarity Reversal Interval",
+        "state": {
+          "2_hours": "Every 2 hours",
+          "4_hours": "Every 4 hours",
+          "6_hours": "Every 6 hours"
+        }
       }
     }
   }
