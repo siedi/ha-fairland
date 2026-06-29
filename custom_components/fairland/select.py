@@ -42,6 +42,16 @@ if TYPE_CHECKING:
 WATER_PUMP_MODE_DP_ID = "103"
 WATER_PUMP_MODE_TRANSLATION_KEY = "water_pump_mode"
 
+# Pool-pump flow-unit selector (dp 110). Drives the unit shown by the flow
+# sensors and the flow setpoint. Maps by integer key.
+WATER_PUMP_FLOW_UNIT_DP_ID = "110"
+WATER_PUMP_FLOW_UNIT_SELECT: dict[str, Any] = {
+    "translation_key": "water_pump_flow_unit",
+    "icon": "mdi:cup-water",
+    "entity_category": EntityCategory.CONFIG,
+    "int_to_option": {0: "m3h", 1: "l_min", 2: "us_gpm", 3: "imp_gpm"},
+}
+
 # Known firmware enum labels → translation-key option names. Option names
 # are lowercase snake_case to match the translation file convention.
 # Labels not listed here fall through to ``slugify(label)`` and are shown
@@ -201,13 +211,21 @@ async def async_setup_entry(
         category = device_info.get("categoryCode")
 
         if category == WATER_PUMP_CATEGORY_CODE:
-            if any(
-                dp.get("dpId") == WATER_PUMP_MODE_DP_ID for dp in device_info["dps"]
-            ):
+            dp_ids = {dp.get("dpId") for dp in device_info["dps"]}
+            if WATER_PUMP_MODE_DP_ID in dp_ids:
                 entities.append(
                     FairlandWaterPumpModeSelect(
                         coordinator=entry.runtime_data.coordinator,
                         device_info=device_info,
+                    )
+                )
+            if WATER_PUMP_FLOW_UNIT_DP_ID in dp_ids:
+                entities.append(
+                    FairlandDpSelect(
+                        coordinator=entry.runtime_data.coordinator,
+                        device_info=device_info,
+                        dp_id=WATER_PUMP_FLOW_UNIT_DP_ID,
+                        config=WATER_PUMP_FLOW_UNIT_SELECT,
                     )
                 )
         elif category in (SALT_MACHINE_CATEGORY_CODE, SAND_CYLINDER_CATEGORY_CODE):

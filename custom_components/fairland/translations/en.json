@@ -49,6 +49,15 @@
           "backwash": "Backwash"
         }
       },
+      "water_pump_flow_unit": {
+        "name": "Flow Unit",
+        "state": {
+          "m3h": "m³/h",
+          "l_min": "L/min",
+          "us_gpm": "US gpm",
+          "imp_gpm": "IMP gpm"
+        }
+      },
       "salt_machine_mode": {
         "name": "Mode",
         "state": {
