@@ -1,0 +1,260 @@
+{
+  "id": "1000000000000000004",
+  "deviceName": "Test Heat Pump",
+  "categoryCode": "heatPump",
+  "version": null,
+  "dps": [
+    {
+      "dpId": "101",
+      "dpValue": true,
+      "dpProperty": "{\"true\": \"开\", \"false\": \"关\"}",
+      "dpMode": "rw",
+      "dpType": "bool"
+    },
+    {
+      "dpId": "102",
+      "dpValue": 2,
+      "dpProperty": "{\"0\": \"Silence\", \"1\": \"Smart\", \"2\": \"Turbo\"}",
+      "dpMode": "rw",
+      "dpType": "enum"
+    },
+    {
+      "dpId": "103",
+      "dpValue": 28,
+      "dpProperty": "{\"max\": 250, \"min\": -22, \"init\": \"0\", \"step\": \"1\", \"unit\": \"\", \"scale\": \"0\"}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "104",
+      "dpValue": false,
+      "dpProperty": "{\"true\": \"℉\", \"false\": \"℃\"}",
+      "dpMode": "rw",
+      "dpType": "bool"
+    },
+    {
+      "dpId": "105",
+      "dpValue": 36,
+      "dpProperty": "{\"max\": 150, \"min\": \"0\", \"init\": \"0\", \"step\": \"1\", \"unit\": \"%\", \"scale\": \"0\"}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "106",
+      "dpValue": 1,
+      "dpProperty": "{\"0\": \"Auto\", \"1\": \"Heating\", \"2\": \"Cooling\"}",
+      "dpMode": "rw",
+      "dpType": "enum"
+    },
+    {
+      "dpId": "107",
+      "dpValue": 28,
+      "dpProperty": "{\"max\": 122, \"min\": -22, \"init\": \"0\", \"step\": \"1\", \"unit\": \"\", \"scale\": \"0\"}",
+      "dpMode": "rw",
+      "dpType": "value"
+    },
+    {
+      "dpId": "108",
+      "dpValue": 18,
+      "dpProperty": "{\"max\": 122, \"min\": -22, \"init\": \"0\", \"step\": \"1\", \"unit\": \"\", \"scale\": \"0\"}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "109",
+      "dpValue": 40,
+      "dpProperty": "{\"max\": 122, \"min\": -22, \"init\": \"0\", \"step\": \"1\", \"unit\": \"\", \"scale\": \"0\"}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "112",
+      "dpValue": 281,
+      "dpProperty": "{\"max\": 65535, \"min\": \"0\", \"init\": \"0\", \"step\": \"1\", \"unit\": \"kW\", \"scale\": 3}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "113",
+      "dpValue": true,
+      "dpProperty": "{\"true\": \"yes\", \"false\": \"no\"}",
+      "dpMode": "ro",
+      "dpType": "bool"
+    },
+    {
+      "dpId": "114",
+      "dpValue": 1,
+      "dpProperty": "{\"0\": \"no\", \"1\": \"yes\"}",
+      "dpMode": "ro",
+      "dpType": "enum"
+    },
+    {
+      "dpId": "115",
+      "dpValue": 1,
+      "dpProperty": "{\"0\": \"no\", \"1\": \"yes\"}",
+      "dpMode": "ro",
+      "dpType": "enum"
+    },
+    {
+      "dpId": "116",
+      "dpValue": 2,
+      "dpProperty": "{\"0\": \"continuous\", \"1\": \"water_temp_control\", \"2\": \"Time1water_temp_cont\"}",
+      "dpMode": "rw",
+      "dpType": "enum"
+    },
+    {
+      "dpId": "117",
+      "dpValue": 60,
+      "dpProperty": "{\"max\": 120, \"min\": 10, \"init\": 10, \"step\": 5, \"unit\": \"min\", \"scale\": \"0\"}",
+      "dpMode": "rw",
+      "dpType": "value"
+    },
+    {
+      "dpId": "118",
+      "dpValue": 30,
+      "dpProperty": "{\"max\": 90, \"min\": 30, \"init\": 30, \"step\": 1, \"unit\": \"min\", \"scale\": \"0\"}",
+      "dpMode": "rw",
+      "dpType": "value"
+    },
+    {
+      "dpId": "119",
+      "dpValue": -7,
+      "dpProperty": "{\"max\": 250, \"min\": -30, \"init\": \"0\", \"step\": \"1\", \"unit\": \"\", \"scale\": \"0\"}",
+      "dpMode": "rw",
+      "dpType": "value"
+    },
+    {
+      "dpId": "120",
+      "dpValue": 12,
+      "dpProperty": "{\"max\": 12, \"min\": 1, \"init\": 1, \"step\": 1, \"unit\": \"min\", \"scale\": \"0\"}",
+      "dpMode": "rw",
+      "dpType": "value"
+    },
+    {
+      "dpId": "121",
+      "dpValue": 13,
+      "dpProperty": "{\"max\": 100, \"min\": 8, \"init\": 8, \"step\": 1, \"unit\": \"\", \"scale\": \"0\"}",
+      "dpMode": "rw",
+      "dpType": "value"
+    },
+    {
+      "dpId": "122",
+      "dpValue": 0,
+      "dpProperty": "{\"0\": \"automatic\", \"1\": \"manual\"}",
+      "dpMode": "ro",
+      "dpType": "enum"
+    },
+    {
+      "dpId": "123",
+      "dpValue": 3,
+      "dpProperty": "{\"max\": 100, \"min\": -10, \"init\": \"0\", \"step\": \"1\", \"unit\": \"\", \"scale\": \"0\"}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "124",
+      "dpValue": 2,
+      "dpProperty": "{\"max\": 100, \"min\": -10, \"init\": \"0\", \"step\": \"1\", \"unit\": \"\", \"scale\": \"0\"}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "125",
+      "dpValue": 0,
+      "dpProperty": "{\"0\": \"automatic\", \"1\": \"manual\"}",
+      "dpMode": "ro",
+      "dpType": "enum"
+    },
+    {
+      "dpId": "126",
+      "dpValue": 175,
+      "dpProperty": "{\"max\": 240, \"min\": 50, \"init\": 50, \"step\": 1, \"unit\": \"\", \"scale\": \"0\"}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "127",
+      "dpValue": 175,
+      "dpProperty": "{\"max\": 240, \"min\": 50, \"init\": 50, \"step\": 1, \"unit\": \"\", \"scale\": \"0\"}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "128",
+      "dpValue": 1,
+      "dpProperty": "{\"0\": \"no\", \"1\": \"yes\"}",
+      "dpMode": "ro",
+      "dpType": "enum"
+    },
+    {
+      "dpId": "129",
+      "dpValue": 28,
+      "dpProperty": "{\"max\": 250, \"min\": -22, \"init\": \"0\", \"step\": \"1\", \"unit\": \"\", \"scale\": \"0\"}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "130",
+      "dpValue": 24,
+      "dpProperty": "{\"max\": 250, \"min\": -22, \"init\": \"0\", \"step\": \"1\", \"unit\": \"\", \"scale\": \"0\"}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "131",
+      "dpValue": 48,
+      "dpProperty": "{\"max\": 250, \"min\": -22, \"init\": \"0\", \"step\": \"1\", \"unit\": \"\", \"scale\": \"0\"}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "132",
+      "dpValue": 15,
+      "dpProperty": "{\"max\": 250, \"min\": -22, \"init\": \"0\", \"step\": \"1\", \"unit\": \"\", \"scale\": \"0\"}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "133",
+      "dpValue": 21,
+      "dpProperty": "{\"max\": 250, \"min\": -22, \"init\": \"0\", \"step\": \"1\", \"unit\": \"\", \"scale\": \"0\"}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "134",
+      "dpValue": 31,
+      "dpProperty": "{\"max\": 250, \"min\": -22, \"init\": \"0\", \"step\": \"1\", \"unit\": \"\", \"scale\": \"0\"}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "135",
+      "dpValue": 32,
+      "dpProperty": "{\"max\": 250, \"min\": -22, \"init\": \"0\", \"step\": \"1\", \"unit\": \"\", \"scale\": \"0\"}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "136",
+      "dpValue": 93,
+      "dpProperty": "{\"max\": 600, \"min\": \"0\", \"init\": \"0\", \"step\": 2, \"unit\": \"\", \"scale\": \"0\"}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "137",
+      "dpValue": 579,
+      "dpProperty": "{\"max\": 100000, \"min\": \"0\", \"init\": \"0\", \"step\": \"1\", \"unit\": \"r/min\", \"scale\": \"0\"}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "138",
+      "dpValue": 0,
+      "dpProperty": "{\"0\": \"on\", \"1\": \"off\"}",
+      "dpMode": "ro",
+      "dpType": "enum"
+    }
+  ]
+}

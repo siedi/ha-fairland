@@ -39,6 +39,13 @@ class _AttrStr:
         return name
 
 
+class _IntFlag:
+    """Bit-flag stand-in: attribute access returns an int so ``|`` works."""
+
+    def __getattr__(self, name: str) -> int:
+        return 1
+
+
 def _register(name: str, **attrs) -> types.ModuleType:
     module = types.ModuleType(name)
     for key, value in attrs.items():
@@ -91,6 +98,18 @@ def _install_stubs() -> None:
         CONF_PASSWORD="password",
         CONF_USERNAME="username",
         Platform=_AttrStr(),
+        ATTR_TEMPERATURE="temperature",
+        PRECISION_WHOLE=1,
+    )
+    _register(
+        "homeassistant.components.climate",
+        ClimateEntity=type("ClimateEntity", (), {}),
+    )
+    _register(
+        "homeassistant.components.climate.const",
+        ClimateEntityFeature=_IntFlag(),
+        HVACAction=_AttrStr(),
+        HVACMode=_AttrStr(),
     )
     _register("homeassistant.core", HomeAssistant=object)
     _register("homeassistant.util", slugify=_slugify)
@@ -163,7 +182,14 @@ def _load_integration() -> dict[str, types.ModuleType]:
         load(name)
     return {
         name: load(name)
-        for name in ("sensor", "switch", "select", "number", "binary_sensor")
+        for name in (
+            "sensor",
+            "switch",
+            "select",
+            "number",
+            "binary_sensor",
+            "climate",
+        )
     }
 
 

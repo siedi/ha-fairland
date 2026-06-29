@@ -278,6 +278,18 @@ HEAT_PUMP_SENSOR_TYPES = {
         "state_class": SensorStateClass.MEASUREMENT,
         "entity_category": EntityCategory.DIAGNOSTIC,
     },
+    # Remote enable terminal (terminals 5/6). Read-only on/off status; the
+    # firmware enum maps 0=on / 1=off, so it is exposed as an enum sensor
+    # rather than a bool (a 0 value would otherwise coerce to "off").
+    "138": {
+        "name": "Remote Switch",
+        "unit": None,
+        "icon": "mdi:remote",
+        "device_class": SensorDeviceClass.ENUM,
+        "state_class": None,
+        "is_enum": True,
+        "entity_category": EntityCategory.DIAGNOSTIC,
+    },
 }
 
 
