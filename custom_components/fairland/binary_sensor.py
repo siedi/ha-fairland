@@ -26,6 +26,7 @@ from .const import (
     DOMAIN,
     LOGGER,
     SALT_MACHINE_CATEGORY_CODE,
+    WATER_PUMP_CATEGORY_CODE,
 )
 from .entity import FairlandEntity
 
@@ -92,8 +93,21 @@ SALT_MACHINE_BINARY_SENSOR_TYPES: dict[str, dict[str, Any]] = {
     },
 }
 
+# Pool-pump binary sensors (issue #79/#80). dp 114 true = 异常 ("Abnormal"
+# per firmware nameLanguage) — already the problem state, not inverted. It is
+# populated on this firmware, so no require_value gate.
+WATER_PUMP_BINARY_SENSOR_TYPES: dict[str, dict[str, Any]] = {
+    "114": {
+        "name": "Pressure Alarm",
+        "icon": "mdi:gauge-low",
+        "device_class": BinarySensorDeviceClass.PROBLEM,
+        "entity_category": EntityCategory.DIAGNOSTIC,
+    },
+}
+
 CATEGORY_BINARY_SENSOR_TYPES = {
     SALT_MACHINE_CATEGORY_CODE: SALT_MACHINE_BINARY_SENSOR_TYPES,
+    WATER_PUMP_CATEGORY_CODE: WATER_PUMP_BINARY_SENSOR_TYPES,
 }
 
 

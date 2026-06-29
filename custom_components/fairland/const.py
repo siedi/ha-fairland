@@ -37,3 +37,9 @@ SALT_MACHINE_CATEGORY_CODE = "saltMachine"
 # Multiport valve / sand-filter controller (MPV, issue #80/#81). Again its
 # own dpId namespace.
 SAND_CYLINDER_CATEGORY_CODE = "sandCylinder"
+
+# Pool-pump flow values (dp 101/106/107/112) are reported in the unit the
+# user selects via dp 110, so flow entities derive their unit from it rather
+# than hardcoding one.
+WATER_PUMP_FLOW_UNIT_DP = "110"
+WATER_PUMP_FLOW_UNITS = {0: "m³/h", 1: "L/min", 2: "US gpm", 3: "IMP gpm"}

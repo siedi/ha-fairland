@@ -28,6 +28,8 @@ from .const import (
     SALT_MACHINE_CATEGORY_CODE,
     SAND_CYLINDER_CATEGORY_CODE,
     WATER_PUMP_CATEGORY_CODE,
+    WATER_PUMP_FLOW_UNIT_DP,
+    WATER_PUMP_FLOW_UNITS,
 )
 from .entity import FairlandEntity
 
@@ -287,6 +289,18 @@ DP_PROPERTY_TIME_UNITS = {
     "min": UnitOfTime.MINUTES,
 }
 
+
+def _resolve_flow_unit(dp_map: dict[str, Any]) -> str | None:
+    """Resolve a pool pump's flow unit from its dp 110 selection."""
+    dp = dp_map.get(WATER_PUMP_FLOW_UNIT_DP)
+    if dp is None:
+        return None
+    try:
+        return WATER_PUMP_FLOW_UNITS.get(int(dp.get("dpValue")))
+    except (TypeError, ValueError):
+        return None
+
+
 # Read-only data points exposed by Fairland-platform water pumps (e.g.
 # Inverflow Plus and OEM-rebadged variants such as Madimack). Energy is
 # reported as an integer with a dpProperty scale (typically scale=2), so it
@@ -325,6 +339,35 @@ WATER_PUMP_SENSOR_TYPES = {
         "icon": "mdi:lightning-bolt",
         "device_class": SensorDeviceClass.ENERGY,
         "state_class": SensorStateClass.TOTAL_INCREASING,
+    },
+    # Flow values are expressed in the unit selected on dp 110, so they carry
+    # no static unit; `flow_unit` resolves it live (see _present_value path).
+    # The firmware's dpProperty unit field is a junk multi-unit string here.
+    "112": {
+        "name": "Water Flow",
+        "unit": None,
+        "icon": "mdi:waves-arrow-right",
+        "device_class": None,
+        "state_class": SensorStateClass.MEASUREMENT,
+        "flow_unit": True,
+    },
+    "101": {
+        "name": "Maximum Flow Setting",
+        "unit": None,
+        "icon": "mdi:arrow-collapse-up",
+        "device_class": None,
+        "state_class": SensorStateClass.MEASUREMENT,
+        "flow_unit": True,
+        "entity_category": EntityCategory.DIAGNOSTIC,
+    },
+    "107": {
+        "name": "Minimum Flow Setting",
+        "unit": None,
+        "icon": "mdi:arrow-collapse-down",
+        "device_class": None,
+        "state_class": SensorStateClass.MEASUREMENT,
+        "flow_unit": True,
+        "entity_category": EntityCategory.DIAGNOSTIC,
     },
 }
 
@@ -612,6 +655,8 @@ class FairlandSensor(FairlandEntity, SensorEntity):
         # Enum sensors map the raw integer value to a firmware label
         # ({"0": "WAIT", ...}); when set, scaling is skipped.
         self._enum_map = sensor_config.get("enum_map")
+        # Flow sensors take their unit from dp 110 (m³/h, L/min, ...).
+        self._flow_unit = sensor_config.get("flow_unit", False)
 
         # Set attributes based on sensor_config
         self._attr_name = sensor_config["name"]
@@ -668,6 +713,8 @@ class FairlandSensor(FairlandEntity, SensorEntity):
                 self._attr_native_value = self._present_value(
                     dp_map[self._dp_id]["dpValue"]
                 )
+                if self._flow_unit:
+                    self._attr_native_unit_of_measurement = _resolve_flow_unit(dp_map)
                 self._attr_available = True
                 return
 

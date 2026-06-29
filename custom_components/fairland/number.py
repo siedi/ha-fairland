@@ -26,6 +26,8 @@ from .const import (
     SALT_MACHINE_CATEGORY_CODE,
     SAND_CYLINDER_CATEGORY_CODE,
     WATER_PUMP_CATEGORY_CODE,
+    WATER_PUMP_FLOW_UNIT_DP,
+    WATER_PUMP_FLOW_UNITS,
 )
 from .entity import FairlandEntity
 
@@ -125,7 +127,31 @@ WATER_PUMP_NUMBER_TYPES = {
         "mode": NumberMode.BOX,
         "entity_category": EntityCategory.CONFIG,
     },
+    # Flow setpoint (used in flow-control mode). Its unit follows the dp 110
+    # selection, so it carries no static unit; min/max come from dpProperty.
+    "106": {
+        "name": "Flow Setpoint",
+        "unit": None,
+        "icon": "mdi:waves-arrow-up",
+        "min": 0,
+        "max": 1000,
+        "step": 1,
+        "mode": NumberMode.BOX,
+        "flow_unit": True,
+    },
 }
+
+
+def _resolve_flow_unit(dp_map: dict[str, Any]) -> str | None:
+    """Resolve a pool pump's flow unit from its dp 110 selection."""
+    dp = dp_map.get(WATER_PUMP_FLOW_UNIT_DP)
+    if dp is None:
+        return None
+    try:
+        return WATER_PUMP_FLOW_UNITS.get(int(dp.get("dpValue")))
+    except (TypeError, ValueError):
+        return None
+
 
 # Inverter salt chlorinator (saltMachine) writable setpoints (issue #80).
 # min/max/step are overridden from each device's dpProperty below, so the
@@ -368,6 +394,8 @@ class FairlandNumber(FairlandEntity, NumberEntity):
         # Firmware reports/accepts the raw integer value × 10^scale (e.g. pH
         # as 74 for 7.4); 0 means the value is already in display units.
         self._scale = config.get("scale", 0)
+        # Flow setpoint takes its unit from dp 110 (m³/h, L/min, ...).
+        self._flow_unit = config.get("flow_unit", False)
 
         # Set attributes based on config
         self._attr_name = config["name"]
@@ -401,6 +429,9 @@ class FairlandNumber(FairlandEntity, NumberEntity):
     def _update_value(self):
         """Update value from device data."""
         if "dps" in self._device_info:
+            if self._flow_unit:
+                dp_map = {dp["dpId"]: dp for dp in self._device_info["dps"]}
+                self._attr_native_unit_of_measurement = _resolve_flow_unit(dp_map)
             for dp in self._device_info["dps"]:
                 if dp["dpId"] == self._dp_id:
                     value = self._effective_dp_value(self._dp_id, dp["dpValue"])
