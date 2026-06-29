@@ -74,6 +74,15 @@ SALT_MACHINE_BINARY_SENSOR_TYPES: dict[str, dict[str, Any]] = {
         "entity_category": EntityCategory.DIAGNOSTIC,
         "require_value": True,
     },
+    # dp 116 true = 校准 ("Calibration required" per firmware nameLanguage) —
+    # a status/alarm like salt-low and replace-probe, not inverted.
+    "116": {
+        "name": "Calibration Required",
+        "icon": "mdi:tune-vertical",
+        "device_class": BinarySensorDeviceClass.PROBLEM,
+        "entity_category": EntityCategory.DIAGNOSTIC,
+        "require_value": True,
+    },
     # dp 154 true = 泳池盖盖上 (pool cover closed). Informational, not a fault.
     "154": {
         "name": "Pool Cover Closed",

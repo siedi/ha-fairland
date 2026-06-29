@@ -185,3 +185,18 @@ def test_water_flow_polarity_is_inverted(setup_entities, flow_value, expected_pr
 def test_salt_low_polarity_not_inverted(setup_entities, salt_value, expected_problem):
     entities, _ = setup_entities("binary_sensor", _salt_with_dp("117", salt_value))
     assert entities[0].is_on is expected_problem
+
+
+@pytest.mark.parametrize(
+    ("calibration_value", "expected_problem"),
+    # dp 116 true = "Calibration required" — a status, not inverted.
+    [(True, True), (False, False)],
+)
+def test_calibration_required_polarity(
+    setup_entities, calibration_value, expected_problem
+):
+    entities, _ = setup_entities(
+        "binary_sensor", _salt_with_dp("116", calibration_value)
+    )
+    assert entities[0]._attr_name == "Calibration Required"
+    assert entities[0].is_on is expected_problem
