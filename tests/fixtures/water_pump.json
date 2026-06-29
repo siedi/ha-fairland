@@ -1,0 +1,134 @@
+{
+  "id": "1000000000000000002",
+  "deviceName": "Test Water Pump",
+  "categoryCode": "waterPump",
+  "version": null,
+  "dps": [
+    {
+      "dpId": "5",
+      "dpValue": 46,
+      "dpProperty": "{\"max\": 3000, \"min\": 0, \"init\": \"0\", \"step\": 1, \"unit\": \"W\", \"scale\": 0}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "101",
+      "dpValue": 25,
+      "dpProperty": "{\"max\": 1000, \"min\": 0, \"init\": \"0\", \"step\": 1, \"unit\": \"m³/h，l/min,lmp gpm,us gpm\", \"scale\": 0}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "102",
+      "dpValue": 30,
+      "dpProperty": "{\"max\": 120, \"min\": 0, \"init\": \"0\", \"step\": 5, \"unit\": \"%\", \"scale\": 0}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "103",
+      "dpValue": 1,
+      "dpProperty": "{\"0\": \"AI\", \"1\": \"MI\", \"2\": \"backwash\"}",
+      "dpMode": "rw",
+      "dpType": "enum"
+    },
+    {
+      "dpId": "104",
+      "dpValue": 1500,
+      "dpProperty": "{\"max\": 1500, \"min\": 0, \"init\": \"0\", \"step\": 30, \"unit\": \"s\", \"scale\": 0}",
+      "dpMode": "rw",
+      "dpType": "value"
+    },
+    {
+      "dpId": "105",
+      "dpValue": true,
+      "dpProperty": "{\"true\": \"on\", \"false\": \"off\"}",
+      "dpMode": "rw",
+      "dpType": "bool"
+    },
+    {
+      "dpId": "106",
+      "dpValue": 5,
+      "dpProperty": "{\"max\": 1000, \"min\": 0, \"init\": \"0\", \"step\": 1, \"unit\": \"m³/h，l/min,lmp gpm,us gpm\", \"scale\": 0}",
+      "dpMode": "rw",
+      "dpType": "value"
+    },
+    {
+      "dpId": "107",
+      "dpValue": 5,
+      "dpProperty": "{\"max\": 140, \"min\": 0, \"init\": \"0\", \"step\": 1, \"unit\": \"m³/h，l/min,lmp gpm,us gpm\", \"scale\": 0}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "108",
+      "dpValue": 0,
+      "dpProperty": "{\"max\": 1500, \"min\": 0, \"init\": \"0\", \"step\": 30, \"unit\": \"s\", \"scale\": 0}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "109",
+      "dpValue": 15,
+      "dpProperty": "{\"max\": 300, \"min\": 0, \"init\": \"0\", \"step\": 1, \"unit\": \"kw·h\", \"scale\": 2}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "110",
+      "dpValue": 0,
+      "dpProperty": "{\"0\": \"m³/h\", \"1\": \"L/min\", \"2\": \"US gpm\", \"3\": \"IMP gpm\"}",
+      "dpMode": "rw",
+      "dpType": "enum"
+    },
+    {
+      "dpId": "111",
+      "dpValue": 30,
+      "dpProperty": "{\"max\": 120, \"min\": 30, \"init\": 30, \"step\": 5, \"unit\": \"%\", \"scale\": 0}",
+      "dpMode": "rw",
+      "dpType": "value"
+    },
+    {
+      "dpId": "112",
+      "dpValue": 3,
+      "dpProperty": "{\"max\": 1000, \"min\": 0, \"init\": \"0\", \"step\": 1, \"unit\": \"m³/h, l/min, imp gpm, us gpm\", \"scale\": 0}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "113",
+      "dpValue": 1,
+      "dpProperty": "{\"max\": 20, \"min\": 0, \"init\": \"0\", \"step\": 1, \"unit\": \"step\", \"scale\": 0}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "114",
+      "dpValue": false,
+      "dpProperty": "{\"true\": \"异常\", \"false\": \"正常\"}",
+      "dpMode": "ro",
+      "dpType": "bool"
+    },
+    {
+      "dpId": "115",
+      "dpValue": true,
+      "dpProperty": "{\"true\": \"on\", \"false\": \"off\"}",
+      "dpMode": "ro",
+      "dpType": "bool"
+    },
+    {
+      "dpId": "116",
+      "dpValue": 0,
+      "dpProperty": "{\"0\": \"re1_0\", \"1\": \"re1_1\", \"2\": \"re1_2\"}",
+      "dpMode": "ro",
+      "dpType": "enum"
+    },
+    {
+      "dpId": "117",
+      "dpValue": 0,
+      "dpProperty": "{\"0\": \"re2_0\", \"1\": \"re2_1\", \"2\": \"re2_2\"}",
+      "dpMode": "ro",
+      "dpType": "enum"
+    }
+  ]
+}

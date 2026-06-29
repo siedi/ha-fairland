@@ -1,0 +1,267 @@
+{
+  "id": "1000000000000000001",
+  "deviceName": "Test Salt Chlorinator",
+  "categoryCode": "saltMachine",
+  "version": null,
+  "dps": [
+    {
+      "dpId": "101",
+      "dpValue": 3018,
+      "dpProperty": "{\"max\": 10000, \"min\": 0, \"init\": 0, \"step\": 1, \"unit\": \"ppm\", \"scale\": 0}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "102",
+      "dpValue": 150,
+      "dpProperty": "{\"max\": 1000, \"min\": -1000, \"init\": 0, \"step\": 1, \"unit\": \"℃\", \"scale\": 1}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "103",
+      "dpValue": true,
+      "dpProperty": "{\"true\": \"开\", \"false\": \"关\"}",
+      "dpMode": "rw",
+      "dpType": "bool"
+    },
+    {
+      "dpId": "104",
+      "dpValue": false,
+      "dpProperty": "{\"true\": \"℉\", \"false\": \"℃\"}",
+      "dpMode": "rw",
+      "dpType": "bool"
+    },
+    {
+      "dpId": "105",
+      "dpValue": 204,
+      "dpProperty": "{\"max\": 1000, \"min\": -1000, \"init\": 0, \"step\": 1, \"unit\": \"℃\", \"scale\": 1}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "106",
+      "dpValue": 0,
+      "dpProperty": "{\"max\": 5000, \"min\": 0, \"init\": 0, \"step\": 1, \"unit\": \"V\", \"scale\": 1}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "107",
+      "dpValue": false,
+      "dpProperty": "{\"true\": \"开\", \"false\": \"关\"}",
+      "dpMode": "rw",
+      "dpType": "bool"
+    },
+    {
+      "dpId": "108",
+      "dpValue": 650,
+      "dpProperty": "{\"max\": 850, \"min\": 200, \"init\": 200, \"step\": 10, \"unit\": \"mV\", \"scale\": 0}",
+      "dpMode": "rw",
+      "dpType": "value"
+    },
+    {
+      "dpId": "109",
+      "dpValue": 100,
+      "dpProperty": "{\"max\": 100, \"min\": 5, \"init\": 5, \"step\": 5, \"unit\": \"m³\", \"scale\": 0}",
+      "dpMode": "rw",
+      "dpType": "value"
+    },
+    {
+      "dpId": "110",
+      "dpValue": 74,
+      "dpProperty": "{\"max\": 85, \"min\": 65, \"init\": 65, \"step\": 1, \"scale\": 1}",
+      "dpMode": "rw",
+      "dpType": "value"
+    },
+    {
+      "dpId": "111",
+      "dpValue": 710,
+      "dpProperty": "{\"max\": 2000, \"min\": -2000, \"init\": 0, \"step\": 1, \"unit\": \"mV\", \"scale\": 0}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "112",
+      "dpValue": 69,
+      "dpProperty": "{\"max\": 140, \"min\": 0, \"init\": 0, \"step\": 1, \"scale\": 1}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "113",
+      "dpValue": 0,
+      "dpProperty": "{\"max\": 200, \"min\": 0, \"init\": 0, \"step\": 1, \"unit\": \"%\", \"scale\": 0}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "114",
+      "dpValue": null,
+      "dpProperty": "{\"true\": \"有水流\", \"false\": \"无水流\"}",
+      "dpMode": "ro",
+      "dpType": "bool"
+    },
+    {
+      "dpId": "115",
+      "dpValue": null,
+      "dpProperty": "{\"true\": \"加酸\", \"false\": \"不加酸\"}",
+      "dpMode": "ro",
+      "dpType": "bool"
+    },
+    {
+      "dpId": "116",
+      "dpValue": null,
+      "dpProperty": "{\"true\": \"校准\", \"false\": \"不校准\"}",
+      "dpMode": "ro",
+      "dpType": "bool"
+    },
+    {
+      "dpId": "117",
+      "dpValue": null,
+      "dpProperty": "{\"true\": \"加盐\", \"false\": \"不加盐\"}",
+      "dpMode": "ro",
+      "dpType": "bool"
+    },
+    {
+      "dpId": "118",
+      "dpValue": null,
+      "dpProperty": "{\"true\": \"更换探头\", \"false\": \"不更换探头\"}",
+      "dpMode": "ro",
+      "dpType": "bool"
+    },
+    {
+      "dpId": "119",
+      "dpValue": 0,
+      "dpProperty": "{\"0\": \"WAIT\", \"1\": \"GOOD\", \"2\": \"GREAT\"}",
+      "dpMode": "ro",
+      "dpType": "enum"
+    },
+    {
+      "dpId": "121",
+      "dpValue": false,
+      "dpProperty": "{\"true\": \"开\", \"false\": \"关\"}",
+      "dpMode": "rw",
+      "dpType": "bool"
+    },
+    {
+      "dpId": "122",
+      "dpValue": 1,
+      "dpProperty": "{\"0\": \"2\", \"1\": \"4\", \"2\": \"6\"}",
+      "dpMode": "rw",
+      "dpType": "enum"
+    },
+    {
+      "dpId": "123",
+      "dpValue": true,
+      "dpProperty": "{\"true\": \"开\", \"false\": \"关\"}",
+      "dpMode": "rw",
+      "dpType": "bool"
+    },
+    {
+      "dpId": "124",
+      "dpValue": 0,
+      "dpProperty": "{\"max\": 500000, \"min\": 0, \"init\": 0, \"step\": 1, \"unit\": \"W\", \"scale\": 2}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "125",
+      "dpValue": 100,
+      "dpProperty": "{\"max\": 130, \"min\": 0, \"init\": 0, \"step\": 5, \"unit\": \"%\", \"scale\": 0}",
+      "dpMode": "rw",
+      "dpType": "value"
+    },
+    {
+      "dpId": "126",
+      "dpValue": 50,
+      "dpProperty": "{\"max\": 9990, \"min\": 0, \"init\": 0, \"step\": 10, \"unit\": \"ml/day\", \"scale\": 0}",
+      "dpMode": "rw",
+      "dpType": "value"
+    },
+    {
+      "dpId": "127",
+      "dpValue": 0,
+      "dpProperty": "{\"0\": \"F1\", \"1\": \"F2\", \"2\": \"F3\", \"3\": \"F4\"}",
+      "dpMode": "ro",
+      "dpType": "enum"
+    },
+    {
+      "dpId": "128",
+      "dpValue": "AAAA",
+      "dpProperty": "{}",
+      "dpMode": "ro",
+      "dpType": "raw"
+    },
+    {
+      "dpId": "130",
+      "dpValue": 0,
+      "dpProperty": "{\"max\": 30000, \"min\": 0, \"init\": 0, \"step\": 1, \"unit\": \"A\", \"scale\": 1}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "131",
+      "dpValue": 1,
+      "dpProperty": "{\"0\": \"base\", \"1\": \"Italian_water_pump\"}",
+      "dpMode": "rw",
+      "dpType": "enum"
+    },
+    {
+      "dpId": "132",
+      "dpValue": 0,
+      "dpProperty": "{\"0\": \"inverter\", \"1\": \"auto_ph\", \"3\": \"manual\"}",
+      "dpMode": "rw",
+      "dpType": "enum"
+    },
+    {
+      "dpId": "133",
+      "dpValue": 590,
+      "dpProperty": "{\"max\": 2120, \"min\": -1480, \"init\": 0, \"step\": 1, \"unit\": \"℉\", \"scale\": 1}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "135",
+      "dpValue": "AAAAAAAAAAAAAA==",
+      "dpProperty": "{}",
+      "dpMode": "rw",
+      "dpType": "raw"
+    },
+    {
+      "dpId": "145",
+      "dpValue": 0,
+      "dpProperty": "{\"max\": 100000, \"min\": 0, \"init\": 0, \"step\": 1, \"unit\": \"Hrs\", \"scale\": 0}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "146",
+      "dpValue": "AQE=",
+      "dpProperty": "{}",
+      "dpMode": "rw",
+      "dpType": "raw"
+    },
+    {
+      "dpId": "152",
+      "dpValue": true,
+      "dpProperty": "{\"true\": \"上报频率加速\", \"false\": \"不处理\"}",
+      "dpMode": "wo",
+      "dpType": "bool"
+    },
+    {
+      "dpId": "153",
+      "dpValue": null,
+      "dpProperty": "{\"true\": \"开启\", \"false\": \"关闭\"}",
+      "dpMode": "rw",
+      "dpType": "bool"
+    },
+    {
+      "dpId": "154",
+      "dpValue": false,
+      "dpProperty": "{\"true\": \"泳池盖盖上，app显示泳池盖 \", \"false\": \"泳池盖打开，app不显示泳池盖\"}",
+      "dpMode": "ro",
+      "dpType": "bool"
+    }
+  ]
+}

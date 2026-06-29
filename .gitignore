@@ -16,3 +16,9 @@ coverage.xml
 # Home Assistant configuration
 config/*
 !config/configuration.yaml
+
+
+# Local diagnostics archive: raw user-attached JSONs kept for reference.
+# Never committed (PII + size). Only the README documenting the convention is.
+diagnostics/*
+!diagnostics/README.md
