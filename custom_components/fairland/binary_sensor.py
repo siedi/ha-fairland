@@ -25,6 +25,7 @@ from homeassistant.helpers.entity import DeviceInfo, EntityCategory
 from .const import (
     DOMAIN,
     LOGGER,
+    POOL_SURFER_CATEGORY_CODE,
     SALT_MACHINE_CATEGORY_CODE,
     WATER_PUMP_CATEGORY_CODE,
 )
@@ -105,9 +106,22 @@ WATER_PUMP_BINARY_SENSOR_TYPES: dict[str, dict[str, Any]] = {
     },
 }
 
+# Counter-current swim jet (poolSurfer, issue #85). dp 4 = "The driver board
+# is faulty" (firmware nameLanguage); non-zero is the fault state, so it is a
+# PROBLEM sensor and is not inverted.
+POOL_SURFER_BINARY_SENSOR_TYPES: dict[str, dict[str, Any]] = {
+    "4": {
+        "name": "Driver Board Fault",
+        "icon": "mdi:alert-circle",
+        "device_class": BinarySensorDeviceClass.PROBLEM,
+        "entity_category": EntityCategory.DIAGNOSTIC,
+    },
+}
+
 CATEGORY_BINARY_SENSOR_TYPES = {
     SALT_MACHINE_CATEGORY_CODE: SALT_MACHINE_BINARY_SENSOR_TYPES,
     WATER_PUMP_CATEGORY_CODE: WATER_PUMP_BINARY_SENSOR_TYPES,
+    POOL_SURFER_CATEGORY_CODE: POOL_SURFER_BINARY_SENSOR_TYPES,
 }
 
 

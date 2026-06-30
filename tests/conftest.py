@@ -92,6 +92,7 @@ def _install_stubs() -> None:
         UnitOfElectricCurrent=_AttrStr(),
         UnitOfElectricPotential=_AttrStr(),
         UnitOfEnergy=_AttrStr(),
+        UnitOfLength=_AttrStr(),
         UnitOfPower=_AttrStr(),
         UnitOfTemperature=_AttrStr(),
         UnitOfTime=_AttrStr(),

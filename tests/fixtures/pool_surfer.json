@@ -1,0 +1,162 @@
+{
+  "id": "1000000000000000085",
+  "deviceName": "Test Swim Jet",
+  "categoryCode": "poolSurfer",
+  "version": null,
+  "dps": [
+    {
+      "dpId": "2",
+      "dpValue": 1,
+      "dpProperty": "{\"0\": \"SJ230 (1900r)\", \"1\": \"SJ200 (1700r)\", \"2\": \"SJ160 (1470r)\", \"3\": \"SJ100 (1180r)\"}",
+      "dpMode": "ro",
+      "dpType": "enum"
+    },
+    {
+      "dpId": "4",
+      "dpValue": 0,
+      "dpProperty": "{\"max\": 65535, \"min\": \"0\", \"init\": \"0\", \"step\": \"1\", \"unit\": \"\", \"scale\": \"0\"}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "6",
+      "dpValue": 347,
+      "dpProperty": "{\"max\": 1000, \"min\": -1000, \"init\": 25, \"step\": \"1\", \"unit\": \"°C\", \"scale\": 1}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "7",
+      "dpValue": 400,
+      "dpProperty": "{\"max\": 1000, \"min\": -1000, \"init\": 25, \"step\": \"1\", \"unit\": \"°C\", \"scale\": 1}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "8",
+      "dpValue": 0,
+      "dpProperty": "{\"max\": 10000, \"min\": -10000, \"init\": \"0\", \"step\": \"1\", \"unit\": \"A\", \"scale\": 2}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "9",
+      "dpValue": 0,
+      "dpProperty": "{\"max\": 65535, \"min\": \"0\", \"init\": \"0\", \"step\": \"1\", \"unit\": \"rpm\", \"scale\": \"0\"}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "10",
+      "dpValue": 243,
+      "dpProperty": "{\"max\": 65535, \"min\": \"0\", \"init\": \"0\", \"step\": \"1\", \"unit\": \"V\", \"scale\": 1}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "11",
+      "dpValue": 0,
+      "dpProperty": "{\"max\": 65535, \"min\": \"0\", \"init\": \"0\", \"step\": \"1\", \"unit\": \"rpm\", \"scale\": \"0\"}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "12",
+      "dpValue": 0,
+      "dpProperty": "{\"max\": 65535, \"min\": \"0\", \"init\": \"0\", \"step\": \"1\", \"unit\": \"w\", \"scale\": \"0\"}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "13",
+      "dpValue": 0,
+      "dpProperty": "{\"max\": 65535, \"min\": \"0\", \"init\": \"0\", \"step\": \"1\", \"unit\": \"A\", \"scale\": 2}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "21",
+      "dpValue": 0,
+      "dpProperty": "{\"0\": \"自由或定时模式\", \"1\": \"TRAINING_MODE_P1\", \"2\": \"TRAINING_MODE_P2\", \"3\": \"TRAINING_MODE_P3\", \"4\": \"TRAINING_MODE_P4\", \"5\": \"TRAINING_MODE_P5\", \"6\": \"TRAINING_MODE_P6\"}",
+      "dpMode": "rw",
+      "dpType": "enum"
+    },
+    {
+      "dpId": "22",
+      "dpValue": 0,
+      "dpProperty": "{\"0\": \"POWER_OFF_STATUS\", \"1\": \"FREE_MODE_INITIAL\", \"2\": \"FREE_MODE_STARTING\", \"3\": \"FREE_MODE_RUNNING\", \"4\": \"FREE_MODE_SUSPEND\", \"5\": \"FREE_MODE_STOP\", \"6\": \"TIMING_MODE_INITIAL\", \"7\": \"TIMING_MODE_STARTING\", \"8\": \"TIMING_MODE_RUNNING\", \"9\": \"TIMING_MODE_SUSPEND\", \"10\": \"TIMING_MODE_STOP\", \"11\": \"TRAINING_MODE_INITIA\", \"12\": \"TRAINING_MODE_STARTI\", \"13\": \"TRAINING_MODE_RUNNIN\", \"14\": \"TRAINING_MODE_SUSPEN\", \"15\": \"TRAINING_MODE_STOP\"}",
+      "dpMode": "rw",
+      "dpType": "enum"
+    },
+    {
+      "dpId": "23",
+      "dpValue": 0,
+      "dpProperty": "{\"max\": 100, \"min\": \"0\", \"init\": 20, \"step\": \"1\", \"unit\": \"%\", \"scale\": \"0\"}",
+      "dpMode": "rw",
+      "dpType": "value"
+    },
+    {
+      "dpId": "28",
+      "dpValue": 20,
+      "dpProperty": "{\"max\": 100, \"min\": \"0\", \"init\": 40, \"step\": \"1\", \"unit\": \"%\", \"scale\": \"0\"}",
+      "dpMode": "rw",
+      "dpType": "value"
+    },
+    {
+      "dpId": "29",
+      "dpValue": 40,
+      "dpProperty": "{\"max\": 100, \"min\": \"0\", \"init\": 40, \"step\": \"1\", \"unit\": \"%\", \"scale\": \"0\"}",
+      "dpMode": "rw",
+      "dpType": "value"
+    },
+    {
+      "dpId": "30",
+      "dpValue": 1800,
+      "dpProperty": "{\"max\": 5999, \"min\": \"0\", \"init\": 1800, \"step\": \"1\", \"unit\": \"秒\", \"scale\": \"0\"}",
+      "dpMode": "rw",
+      "dpType": "value"
+    },
+    {
+      "dpId": "40",
+      "dpValue": 0,
+      "dpProperty": "{\"max\": 65535, \"min\": \"0\", \"init\": \"0\", \"step\": \"1\", \"unit\": \" (秒)\", \"scale\": \"0\"}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "41",
+      "dpValue": 0,
+      "dpProperty": "{\"max\": 100, \"min\": \"0\", \"init\": \"0\", \"step\": \"1\", \"unit\": \"(%)\", \"scale\": \"0\"}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "42",
+      "dpValue": 0,
+      "dpProperty": "{\"max\": 2147483647, \"min\": \"0\", \"init\": \"0\", \"step\": \"1\", \"unit\": \"(米)\", \"scale\": 2}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "50",
+      "dpValue": 345,
+      "dpProperty": "{\"max\": 1000, \"min\": -1000, \"init\": \"0\", \"step\": \"1\", \"unit\": \"°C\", \"scale\": 1}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "51",
+      "dpValue": 347,
+      "dpProperty": "{\"max\": 1000, \"min\": -1000, \"init\": \"0\", \"step\": \"1\", \"unit\": \"°C\", \"scale\": 1}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "52",
+      "dpValue": 346,
+      "dpProperty": "{\"max\": 1000, \"min\": -1000, \"init\": \"0\", \"step\": \"1\", \"unit\": \"°C\", \"scale\": 1}",
+      "dpMode": "ro",
+      "dpType": "value"
+    }
+  ]
+}
