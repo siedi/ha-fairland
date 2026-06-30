@@ -15,6 +15,7 @@ from homeassistant.const import (
     UnitOfElectricCurrent,
     UnitOfElectricPotential,
     UnitOfEnergy,
+    UnitOfLength,
     UnitOfPower,
     UnitOfTemperature,
     UnitOfTime,
@@ -25,6 +26,7 @@ from .const import (
     DOMAIN,
     HEAT_PUMP_CATEGORY_CODE,
     LOGGER,
+    POOL_SURFER_CATEGORY_CODE,
     SALT_MACHINE_CATEGORY_CODE,
     SAND_CYLINDER_CATEGORY_CODE,
     WATER_PUMP_CATEGORY_CODE,
@@ -550,6 +552,148 @@ SAND_CYLINDER_SENSOR_TYPES = {
 }
 
 
+# Counter-current swim jet (poolSurfer, issue #85). Names are taken from the
+# firmware's own nameLanguage (en-US) like the sandCylinder map. dp 23 (the
+# speed control) and the operating-mode select live on the number/select
+# platforms. Pure firmware-debug dps (RTOS stack sizes, RCC flags, OTA size,
+# commissioning timers, device log, wifi level) are deliberately omitted.
+# Scale comes from each dp's dpProperty via the scale-from-property path.
+POOL_SURFER_SENSOR_TYPES = {
+    # dp 22 is the running-state machine, exposed read-only as an enum sensor
+    # (its dpProperty carries the value→label map: POWER_OFF, FREE_MODE_*, …).
+    "22": {
+        "name": "Status",
+        "unit": None,
+        "icon": "mdi:state-machine",
+        "device_class": SensorDeviceClass.ENUM,
+        "state_class": None,
+        "is_enum": True,
+        "entity_category": EntityCategory.DIAGNOSTIC,
+    },
+    "2": {
+        "name": "Model",
+        "unit": None,
+        "icon": "mdi:identifier",
+        "device_class": SensorDeviceClass.ENUM,
+        "state_class": None,
+        "is_enum": True,
+        "entity_category": EntityCategory.DIAGNOSTIC,
+    },
+    # Session statistics (firmware "Complete(ion) Statistics_*"). All read 0
+    # while the jet is idle.
+    "42": {
+        "name": "Session Distance",
+        "unit": UnitOfLength.METERS,
+        "icon": "mdi:swim",
+        "device_class": SensorDeviceClass.DISTANCE,
+        "state_class": SensorStateClass.MEASUREMENT,
+    },
+    "40": {
+        "name": "Session Duration",
+        "unit": UnitOfTime.SECONDS,
+        "icon": "mdi:timer-outline",
+        "device_class": SensorDeviceClass.DURATION,
+        "state_class": SensorStateClass.MEASUREMENT,
+    },
+    "41": {
+        "name": "Session Swimming Intensity",
+        "unit": PERCENTAGE,
+        "icon": "mdi:speedometer",
+        "device_class": None,
+        "state_class": SensorStateClass.MEASUREMENT,
+    },
+    # Electrical telemetry (all diagnostic).
+    "12": {
+        "name": "Motor Power",
+        "unit": UnitOfPower.WATT,
+        "icon": "mdi:flash",
+        "device_class": SensorDeviceClass.POWER,
+        "state_class": SensorStateClass.MEASUREMENT,
+    },
+    "9": {
+        "name": "Motor Speed",
+        "unit": "rpm",
+        "icon": "mdi:fan",
+        "device_class": None,
+        "state_class": SensorStateClass.MEASUREMENT,
+        "entity_category": EntityCategory.DIAGNOSTIC,
+    },
+    "11": {
+        "name": "Commanded Speed",
+        "unit": "rpm",
+        "icon": "mdi:fan-chevron-up",
+        "device_class": None,
+        "state_class": SensorStateClass.MEASUREMENT,
+        "entity_category": EntityCategory.DIAGNOSTIC,
+    },
+    "10": {
+        "name": "Bus Voltage",
+        "unit": UnitOfElectricPotential.VOLT,
+        "icon": "mdi:sine-wave",
+        "device_class": SensorDeviceClass.VOLTAGE,
+        "state_class": SensorStateClass.MEASUREMENT,
+        "entity_category": EntityCategory.DIAGNOSTIC,
+    },
+    "13": {
+        "name": "Bus Current",
+        "unit": UnitOfElectricCurrent.AMPERE,
+        "icon": "mdi:current-ac",
+        "device_class": SensorDeviceClass.CURRENT,
+        "state_class": SensorStateClass.MEASUREMENT,
+        "entity_category": EntityCategory.DIAGNOSTIC,
+    },
+    "8": {
+        "name": "Motor Current",
+        "unit": UnitOfElectricCurrent.AMPERE,
+        "icon": "mdi:current-dc",
+        "device_class": SensorDeviceClass.CURRENT,
+        "state_class": SensorStateClass.MEASUREMENT,
+        "entity_category": EntityCategory.DIAGNOSTIC,
+    },
+    # Internal temperatures (all diagnostic).
+    "6": {
+        "name": "MOS Temperature",
+        "unit": UnitOfTemperature.CELSIUS,
+        "icon": "mdi:thermometer",
+        "device_class": SensorDeviceClass.TEMPERATURE,
+        "state_class": SensorStateClass.MEASUREMENT,
+        "entity_category": EntityCategory.DIAGNOSTIC,
+    },
+    "7": {
+        "name": "Electrical Box Temperature",
+        "unit": UnitOfTemperature.CELSIUS,
+        "icon": "mdi:thermometer",
+        "device_class": SensorDeviceClass.TEMPERATURE,
+        "state_class": SensorStateClass.MEASUREMENT,
+        "entity_category": EntityCategory.DIAGNOSTIC,
+    },
+    "50": {
+        "name": "Driver Board NTC Temperature 1",
+        "unit": UnitOfTemperature.CELSIUS,
+        "icon": "mdi:thermometer",
+        "device_class": SensorDeviceClass.TEMPERATURE,
+        "state_class": SensorStateClass.MEASUREMENT,
+        "entity_category": EntityCategory.DIAGNOSTIC,
+    },
+    "51": {
+        "name": "Driver Board NTC Temperature 2",
+        "unit": UnitOfTemperature.CELSIUS,
+        "icon": "mdi:thermometer",
+        "device_class": SensorDeviceClass.TEMPERATURE,
+        "state_class": SensorStateClass.MEASUREMENT,
+        "entity_category": EntityCategory.DIAGNOSTIC,
+    },
+    "52": {
+        "name": "Driver Board NTC Temperature 3",
+        "unit": UnitOfTemperature.CELSIUS,
+        "icon": "mdi:thermometer",
+        "device_class": SensorDeviceClass.TEMPERATURE,
+        "state_class": SensorStateClass.MEASUREMENT,
+        "entity_category": EntityCategory.DIAGNOSTIC,
+    },
+}
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: FairlandConfigEntry,
@@ -574,6 +718,8 @@ async def async_setup_entry(
             sensor_types = SALT_MACHINE_SENSOR_TYPES
         elif category == SAND_CYLINDER_CATEGORY_CODE:
             sensor_types = SAND_CYLINDER_SENSOR_TYPES
+        elif category == POOL_SURFER_CATEGORY_CODE:
+            sensor_types = POOL_SURFER_SENSOR_TYPES
         else:
             continue
 

@@ -23,6 +23,7 @@ from .const import (
     DOMAIN,
     HEAT_PUMP_CATEGORY_CODE,
     LOGGER,
+    POOL_SURFER_CATEGORY_CODE,
     SALT_MACHINE_CATEGORY_CODE,
     SAND_CYLINDER_CATEGORY_CODE,
     WATER_PUMP_CATEGORY_CODE,
@@ -277,6 +278,55 @@ SAND_CYLINDER_NUMBER_TYPES = {
 }
 
 
+# Counter-current swim jet (poolSurfer, issue #85) writable setpoints. Names
+# from the firmware nameLanguage (en-US). dp 23 is the index data point
+# ("Current rotational speed", de "Aktuelle Geschwindigkeit") — the jet's
+# main speed control. dp 28/29/30 are the per-mode defaults. min/max/step
+# come from each dp's dpProperty. The device-clock register (dp 24) and the
+# raw training-program blobs (dp 31-38) are not exposed here.
+POOL_SURFER_NUMBER_TYPES = {
+    "23": {
+        "name": "Speed",
+        "unit": PERCENTAGE,
+        "icon": "mdi:speedometer",
+        "min": 0,
+        "max": 100,
+        "step": 1,
+        "mode": NumberMode.SLIDER,
+    },
+    "28": {
+        "name": "Free Mode Default Speed",
+        "unit": PERCENTAGE,
+        "icon": "mdi:speedometer-medium",
+        "min": 0,
+        "max": 100,
+        "step": 1,
+        "mode": NumberMode.SLIDER,
+        "entity_category": EntityCategory.CONFIG,
+    },
+    "29": {
+        "name": "Timer Mode Default Speed",
+        "unit": PERCENTAGE,
+        "icon": "mdi:speedometer-medium",
+        "min": 0,
+        "max": 100,
+        "step": 1,
+        "mode": NumberMode.SLIDER,
+        "entity_category": EntityCategory.CONFIG,
+    },
+    "30": {
+        "name": "Timer Mode Default Duration",
+        "unit": UnitOfTime.SECONDS,
+        "icon": "mdi:timer-cog",
+        "min": 0,
+        "max": 5999,
+        "step": 1,
+        "mode": NumberMode.BOX,
+        "entity_category": EntityCategory.CONFIG,
+    },
+}
+
+
 # Firmware-reported time units (dpProperty "unit") we trust to override a
 # default time unit: the backwash duration comes in seconds on some pumps
 # (e.g. InverFlow(L), issue #77) and minutes on others.
@@ -307,6 +357,8 @@ async def async_setup_entry(
             number_types = SALT_MACHINE_NUMBER_TYPES
         elif category == SAND_CYLINDER_CATEGORY_CODE:
             number_types = SAND_CYLINDER_NUMBER_TYPES
+        elif category == POOL_SURFER_CATEGORY_CODE:
+            number_types = POOL_SURFER_NUMBER_TYPES
         else:
             continue
 

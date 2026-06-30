@@ -109,6 +109,18 @@
           "celsius": "Celsius",
           "fahrenheit": "Fahrenheit"
         }
+      },
+      "pool_surfer_mode": {
+        "name": "Working Mode",
+        "state": {
+          "free_or_timed": "Free or timed mode",
+          "training_1": "Training Mode 1",
+          "training_2": "Training Mode 2",
+          "training_3": "Training Mode 3",
+          "training_4": "Training Mode 4",
+          "surf": "Surf mode",
+          "custom": "Custom"
+        }
       }
     }
   }

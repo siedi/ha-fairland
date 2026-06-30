@@ -37,6 +37,9 @@ SALT_MACHINE_CATEGORY_CODE = "saltMachine"
 # Multiport valve / sand-filter controller (MPV, issue #80/#81). Again its
 # own dpId namespace.
 SAND_CYLINDER_CATEGORY_CODE = "sandCylinder"
+# Counter-current swim jet (Fairland/iGarden "Swim Jet", productCode
+# iupstream1, issue #85). Yet another wholly separate dpId namespace.
+POOL_SURFER_CATEGORY_CODE = "poolSurfer"
 
 # Pool-pump flow values (dp 101/106/107/112) are reported in the unit the
 # user selects via dp 110, so flow entities derive their unit from it rather

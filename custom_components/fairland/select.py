@@ -25,6 +25,7 @@ from .api import FairlandApiClientCommunicationError, FairlandApiClientError
 from .const import (
     DOMAIN,
     LOGGER,
+    POOL_SURFER_CATEGORY_CODE,
     SALT_MACHINE_CATEGORY_CODE,
     SAND_CYLINDER_CATEGORY_CODE,
     WATER_PUMP_CATEGORY_CODE,
@@ -133,6 +134,31 @@ SAND_CYLINDER_SELECT_TYPES: dict[str, dict[str, Any]] = {
 }
 
 
+# Counter-current swim jet (poolSurfer, issue #85). dp 21 = "Working mode"
+# (firmware nameLanguage): free/timer mode, four preset training programs, a
+# surf mode and a custom program. The dp's raw dpProperty labels are stale
+# ("TRAINING_MODE_P1..P6") and disagree with the firmware's own
+# dpPropertyNameLanguage, so options map by the integer key rather than the
+# label (the same approach the sandCylinder selects use).
+#
+# NOTE: selecting a training/surf program starts the jet running it.
+POOL_SURFER_SELECT_TYPES: dict[str, dict[str, Any]] = {
+    "21": {
+        "translation_key": "pool_surfer_mode",
+        "icon": "mdi:swim",
+        "int_to_option": {
+            0: "free_or_timed",
+            1: "training_1",
+            2: "training_2",
+            3: "training_3",
+            4: "training_4",
+            5: "surf",
+            6: "custom",
+        },
+    },
+}
+
+
 def _enum_int_keys(dp: dict[str, Any]) -> set[int]:
     """Return the set of integer enum keys advertised in a dp's dpProperty."""
     try:
@@ -228,12 +254,16 @@ async def async_setup_entry(
                         config=WATER_PUMP_FLOW_UNIT_SELECT,
                     )
                 )
-        elif category in (SALT_MACHINE_CATEGORY_CODE, SAND_CYLINDER_CATEGORY_CODE):
-            select_types = (
-                SALT_MACHINE_SELECT_TYPES
-                if category == SALT_MACHINE_CATEGORY_CODE
-                else SAND_CYLINDER_SELECT_TYPES
-            )
+        elif category in (
+            SALT_MACHINE_CATEGORY_CODE,
+            SAND_CYLINDER_CATEGORY_CODE,
+            POOL_SURFER_CATEGORY_CODE,
+        ):
+            select_types = {
+                SALT_MACHINE_CATEGORY_CODE: SALT_MACHINE_SELECT_TYPES,
+                SAND_CYLINDER_CATEGORY_CODE: SAND_CYLINDER_SELECT_TYPES,
+                POOL_SURFER_CATEGORY_CODE: POOL_SURFER_SELECT_TYPES,
+            }[category]
             dp_ids = {dp.get("dpId") for dp in device_info["dps"]}
             for dp_id, config in select_types.items():
                 if dp_id not in dp_ids:
