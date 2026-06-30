@@ -15,7 +15,9 @@ This integration enables monitoring and control of Fairland pool heat pumps and 
 
 > **Single active session per account:** The iGarden cloud only allows one active session per account at a time. While the Home Assistant integration is connected, the iGarden mobile app will show your device as "offline" and cannot control it — and vice versa. This is enforced server-side; no header or client-fingerprint trick defeats it.
 >
-> **Recommended workaround:** Create a second iGarden account (different email) and use the iGarden app to *share* your device from the primary account to the second one. Then configure the Home Assistant integration with the second account's credentials. HA and your phone will use independent sessions and stop kicking each other out. See [#69](https://github.com/siedi/ha-fairland/issues/69) for the full context.
+> **Recommended workaround:** Create a second iGarden account (different email) and use the iGarden app to *share* your device from the primary (owner) account to the second one. Keep the Home Assistant integration configured with the **primary (owner)** account, and log into the iGarden **app** with the **second (shared)** account. HA and your phone will then use independent sessions and stop kicking each other out.
+>
+> Note: it has to be this way round. The integration only reads devices you *own* (it does not query shared devices), so configuring HA with the shared account would not work. See [#69](https://github.com/siedi/ha-fairland/issues/69) for the full context.
 
 ## Supported Devices
 
