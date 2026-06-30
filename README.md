@@ -3,7 +3,7 @@
 [![HACS Badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/custom-components/hacs)
 [![GitHub Release](https://img.shields.io/github/release/siedi/ha-fairland.svg)](https://github.com/siedi/ha-fairland/releases)
 
-This integration enables monitoring and control of Fairland pool heat pumps and pool pumps (Inverflow Plus and OEM-rebadged variants such as Madimack) in Home Assistant, connecting directly to Fairland's iGarden cloud API rather than using Tuya.
+This integration enables monitoring and control of Fairland pool equipment in Home Assistant — heat pumps, pool pumps (Inverflow Plus and OEM-rebadged variants such as Madimack), salt chlorinators, multiport (sand-filter) valves and swim jets — connecting directly to Fairland's iGarden cloud API rather than using Tuya.
 
 ## Compatibility
 
@@ -23,13 +23,16 @@ This integration enables monitoring and control of Fairland pool heat pumps and 
 
 * Fairland pool heat pumps on the iGarden platform
 * Fairland Inverflow Plus pool pumps on the iGarden platform
+* Fairland inverter salt chlorinators (i-Salt and OEM rebrands) on the iGarden platform
+* Multiport valve / sand-filter controllers on the iGarden platform
+* iGarden Swim Jet counter-current swimming machines
 * OEM-rebadged variants of the above — Madimack pool pumps (e.g. Inverflow Plus 1.5hp) are Fairland OEM rebrands and run on the same iGarden cloud, so they are supported as well
 
 ## Features
 
 * Monitor operational parameters of your Fairland device
 * Control settings directly from Home Assistant
-* Support for multiple Fairland heat pump and pool pump models
+* Support for multiple Fairland device types — heat pumps, pool pumps, salt chlorinators, multiport valves and swim jets
 * Direct cloud API connection to Fairland (not using Tuya)
 
 ## Installation
@@ -94,6 +97,27 @@ The integration creates a range of entities depending on the type of device disc
 * **Running Rate** (sensor, %) — real-time motor speed; only created on pumps whose firmware reports it
 * **Backwash Countdown** (sensor, diagnostic) — time remaining in the active backwash cycle, in the unit your pump's firmware reports
 * **Energy Consumption** (sensor, kWh, `TOTAL_INCREASING`) — cumulative energy, works directly with the Energy Dashboard
+
+### For salt chlorinators
+
+* **Power switch**, plus switches for Turbo boost, Timer, real-time salinity monitoring and Backwash (where the firmware supports it)
+* **Mode** and **Polarity Reversal Interval** (selects) — options are read from what your device reports
+* Setpoints (number): pH, ORP, target chlorine output, pool volume and acid dosing rate; ranges follow what your device reports
+* Sensors: salt concentration, pH, ORP, pool water temperature (°C and °F), controller temperature, chlorine output, power, voltage, current, runtime, water quality and active profile
+* Diagnostic binary sensors: water flow fault, acid dosing, salt low, replace probe, calibration required and pool cover closed
+
+### For multiport valves (sand filters)
+
+* **Mode** (select) — e.g. Filter, Backwash, Rinse, Recirculate, Waste, Closed; selecting a mode drives the valve. **Pump Control**, **Pressure Unit** and **Temperature Detection** selects round it out
+* Setpoints (number): backwash trigger pressure, timed backwash interval, backwash duration, washing time ratio, low-temperature protection and VS-pump backwash speed
+* Sensors: water temperature, pressure, current valve position and the backwash/rinse countdowns
+
+### For swim jets
+
+* **Working Mode** (select) — free/timed, training programs, surf and custom
+* **Speed** (number), plus the per-mode default speed and timer duration
+* **Driver Board Fault** (binary sensor)
+* Sensors: status, model, session distance/duration/intensity, motor power, motor and commanded speed, bus voltage, motor/bus current and the internal temperatures (diagnostic)
 
 ## Energy Monitoring
 
