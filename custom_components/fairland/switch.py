@@ -12,6 +12,7 @@ from .const import (
     DOMAIN,
     HEAT_PUMP_CATEGORY_CODE,
     LOGGER,
+    POOL_SURFER_CATEGORY_CODE,
     SALT_MACHINE_CATEGORY_CODE,
     WATER_PUMP_CATEGORY_CODE,
 )
@@ -48,11 +49,27 @@ SALT_MACHINE_SWITCH_TYPES: dict[str, dict[str, Any]] = {
     # (pausing chlorine production during a backwash cycle).
     "153": {"name": "Backwash", "icon": "mdi:water-sync", "require_value": True},
 }
+# Swim jet (poolSurfer, #85). There is no boolean power dp; the on/off state
+# lives in the dp 22 state machine. Powering on runs Free Mode P0 by default
+# (confirmed by the user manual and the on/off diagnostics: dp 22 goes
+# 0 = POWER_OFF -> 3 = FREE_MODE_RUNNING), so the Power switch writes those
+# enum values instead of a bool. `enum_on_value`/`enum_off_value` opt into
+# the enum write/read path; any non-POWER_OFF state reads as on.
+POOL_SURFER_SWITCH_TYPES: dict[str, dict[str, Any]] = {
+    "22": {
+        "name": "Power",
+        "icon": "mdi:power",
+        "is_power": True,
+        "enum_on_value": 3,
+        "enum_off_value": 0,
+    },
+}
 
 CATEGORY_SWITCH_TYPES = {
     HEAT_PUMP_CATEGORY_CODE: HEAT_PUMP_SWITCH_TYPES,
     WATER_PUMP_CATEGORY_CODE: WATER_PUMP_SWITCH_TYPES,
     SALT_MACHINE_CATEGORY_CODE: SALT_MACHINE_SWITCH_TYPES,
+    POOL_SURFER_CATEGORY_CODE: POOL_SURFER_SWITCH_TYPES,
 }
 
 
@@ -126,6 +143,10 @@ class FairlandSwitch(FairlandEntity, SwitchEntity):
         self._attr_unique_id = f"{DOMAIN}_{self._device_id}_{suffix}"
         self._attr_name = config["name"]
         self._attr_icon = config.get("icon", "mdi:power")
+        # Enum-backed switches (e.g. the swim jet's dp 22 state machine) write
+        # integer states instead of a bool; on = any value other than "off".
+        self._enum_on = config.get("enum_on_value")
+        self._enum_off = config.get("enum_off_value")
         self._is_on = False
 
         # Device info
@@ -140,12 +161,23 @@ class FairlandSwitch(FairlandEntity, SwitchEntity):
         # Initialize the state from device info
         self._update_state()
 
+    def _coerce_on(self, raw: Any) -> bool:
+        """Map a raw dpValue to on/off, honoring an enum on/off mapping."""
+        if self._enum_on is None:
+            return _coerce_bool(raw)
+        if raw is None:
+            return False
+        try:
+            return int(raw) != int(self._enum_off)
+        except (TypeError, ValueError):
+            return False
+
     def _update_state(self):
         """Update state from device data."""
         if "dps" in self._device_info:
             for dp in self._device_info["dps"]:
                 if dp["dpId"] == self._dp_id:
-                    self._is_on = _coerce_bool(
+                    self._is_on = self._coerce_on(
                         self._effective_dp_value(self._dp_id, dp["dpValue"])
                     )
                     self._attr_available = True
@@ -184,16 +216,21 @@ class FairlandSwitch(FairlandEntity, SwitchEntity):
 
     async def _async_write(self, value: bool) -> None:
         """Write a new on/off state, holding it optimistically (#77)."""
+        # Enum-backed switches send the mapped integer state (e.g. the swim
+        # jet's dp 22: 3 = FREE_MODE_RUNNING, 0 = POWER_OFF) rather than a bool.
+        write_value: Any = value
+        if self._enum_on is not None:
+            write_value = self._enum_on if value else self._enum_off
         try:
             await self.coordinator.config_entry.runtime_data.client.set_device_status(
                 self._device_id,
                 self._dp_id,
-                value,
+                write_value,
             )
             # Optimistisch setzen; die Cloud meldet den neuen Wert erst nach
             # 2-4 s zurück, ein sofortiger Refresh würde den alten Wert lesen
             # und die UI zurückspringen lassen (#77).
-            self._note_pending_write(self._dp_id, value)
+            self._note_pending_write(self._dp_id, write_value)
             self._is_on = value
             self.async_write_ha_state()
             self._schedule_write_refresh()
