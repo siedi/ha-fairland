@@ -75,6 +75,13 @@
       "dpType": "value"
     },
     {
+      "dpId": "20",
+      "dpValue": "AAAAAA==",
+      "dpProperty": "{}",
+      "dpMode": "rw",
+      "dpType": "raw"
+    },
+    {
       "dpId": "21",
       "dpValue": 0,
       "dpProperty": "{\"0\": \"自由或定时模式\", \"1\": \"TRAINING_MODE_P1\", \"2\": \"TRAINING_MODE_P2\", \"3\": \"TRAINING_MODE_P3\", \"4\": \"TRAINING_MODE_P4\", \"5\": \"TRAINING_MODE_P5\", \"6\": \"TRAINING_MODE_P6\"}",
