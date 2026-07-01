@@ -579,6 +579,21 @@ POOL_SURFER_SENSOR_TYPES = {
         "is_enum": True,
         "entity_category": EntityCategory.DIAGNOSTIC,
     },
+    # dp 4 "The driver board is faulty" is a 0-65535 code register (0 = OK),
+    # also surfaced as a binary PROBLEM sensor. Exposed here as the raw code
+    # so it can be cross-referenced against the manual's fault-code table
+    # (E0 01 .. E2 03). The value is shown verbatim, with no interpretation:
+    # the firmware's encoding is unconfirmed (suspected group<<8 | index, e.g.
+    # E2 02 -> 514) and we have no faulted capture to verify it, so no
+    # code->text map is applied.
+    "4": {
+        "name": "Fault Code",
+        "unit": None,
+        "icon": "mdi:alert-circle-outline",
+        "device_class": None,
+        "state_class": None,
+        "entity_category": EntityCategory.DIAGNOSTIC,
+    },
     # Session statistics (firmware "Complete(ion) Statistics_*"). All read 0
     # while the jet is idle.
     "42": {

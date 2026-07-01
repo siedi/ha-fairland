@@ -32,6 +32,7 @@ def test_sensor_dps_created(setup_entities, swim_jet_devices):
     entities, _ = setup_entities("sensor", swim_jet_devices)
     assert set(_by_dp(entities)) == {
         "2",
+        "4",
         "22",
         "42",
         "40",
@@ -48,6 +49,15 @@ def test_sensor_dps_created(setup_entities, swim_jet_devices):
         "51",
         "52",
     }
+
+
+def test_fault_code_raw_value(setup_entities, swim_jet_devices):
+    # dp 4 is the raw fault-code register (0 = OK), shown verbatim with no
+    # code->text interpretation.
+    dps = _by_dp(setup_entities("sensor", swim_jet_devices)[0])
+    assert dps["4"]._attr_native_value == 0
+    assert dps["4"]._enum_map is None
+    assert dps["4"]._attr_entity_category == "DIAGNOSTIC"
 
 
 def test_voltage_scaled(setup_entities, swim_jet_devices):
@@ -161,8 +171,35 @@ def test_driver_board_fault_created(setup_entities, swim_jet_devices):
 
 
 # --------------------------------------------------------------------------
-# No switches / climate for this category
+# Power switch (dp 22 state machine)
 # --------------------------------------------------------------------------
-def test_no_switches(setup_entities, swim_jet_devices):
+def test_power_switch_created(setup_entities, swim_jet_devices):
     entities, _ = setup_entities("switch", swim_jet_devices)
-    assert entities == []
+    switches = _by_dp(entities)
+    assert set(switches) == {"22"}
+    # Captured while off (dp 22 = 0 = POWER_OFF).
+    assert switches["22"].is_on is False
+
+
+def test_power_switch_on_when_running(setup_entities, swim_jet_devices):
+    # dp 22 = 3 (FREE_MODE_RUNNING) reads as on; any non-POWER_OFF state does.
+    devs = [dict(swim_jet_devices[0])]
+    devs[0]["dps"] = [
+        {**dp, "dpValue": 3} if dp["dpId"] == "22" else dp for dp in devs[0]["dps"]
+    ]
+    switches = _by_dp(setup_entities("switch", devs)[0])
+    assert switches["22"].is_on is True
+
+
+def test_power_switch_turn_on_sends_running(setup_entities, swim_jet_devices):
+    entities, client = setup_entities("switch", swim_jet_devices)
+    asyncio.run(_by_dp(entities)["22"].async_turn_on())
+    # On writes 3 (FREE_MODE_RUNNING), matching the power-on default.
+    assert client.calls == [(swim_jet_devices[0]["id"], "22", 3)]
+
+
+def test_power_switch_turn_off_sends_power_off(setup_entities, swim_jet_devices):
+    entities, client = setup_entities("switch", swim_jet_devices)
+    asyncio.run(_by_dp(entities)["22"].async_turn_off())
+    # Off writes 0 (POWER_OFF).
+    assert client.calls == [(swim_jet_devices[0]["id"], "22", 0)]
