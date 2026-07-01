@@ -22,7 +22,22 @@ def swim_jet_devices() -> list[dict]:
 
 
 def _by_dp(entities: list) -> dict:
-    return {e._dp_id: e for e in entities}
+    # The pause switch has no single backing dp, so key only the dp-bound ones.
+    return {e._dp_id: e for e in entities if hasattr(e, "_dp_id")}
+
+
+def _by_name(entities: list, name: str):
+    return next(e for e in entities if getattr(e, "_attr_name", None) == name)
+
+
+def _with_dps(device: dict, overrides: dict) -> list[dict]:
+    """Clone a device with some dpValues overridden (by dpId)."""
+    clone = dict(device)
+    clone["dps"] = [
+        {**dp, "dpValue": overrides.get(dp["dpId"], dp["dpValue"])}
+        for dp in device["dps"]
+    ]
+    return [clone]
 
 
 # --------------------------------------------------------------------------
@@ -226,3 +241,44 @@ def test_power_switch_turn_off_sends_power_off(setup_entities, swim_jet_devices)
     asyncio.run(_by_dp(entities)["22"].async_turn_off())
     # Off writes 0 (POWER_OFF).
     assert client.calls == [(swim_jet_devices[0]["id"], "22", 0)]
+
+
+# --------------------------------------------------------------------------
+# Pause switch (dp 22 suspend states, written via packed dp 20)
+# --------------------------------------------------------------------------
+def test_pause_switch_created(setup_entities, swim_jet_devices):
+    entities, _ = setup_entities("switch", swim_jet_devices)
+    names = {getattr(e, "_attr_name", None) for e in entities}
+    assert {"Power", "Pause"} <= names
+    # Captured while off (dp 22 = 0) → not paused.
+    assert _by_name(entities, "Pause").is_on is False
+
+
+def test_pause_when_free_running(setup_entities, swim_jet_devices):
+    # Free running (dp 22 = 3, mode 0): pausing writes <mode 0, suspend 4> →
+    # bytes [0,0,4,0] → "AAAEAA==".
+    devs = _with_dps(swim_jet_devices[0], {"22": 3, "21": 0})
+    entities, client = setup_entities("switch", devs)
+    pause = _by_name(entities, "Pause")
+    assert pause.is_on is False
+    asyncio.run(pause.async_turn_on())
+    assert client.calls == [(devs[0]["id"], "20", "AAAEAA==")]
+    assert pause.is_on is True  # optimistic hold on dp 22 = 4
+
+
+def test_resume_when_surf_paused(setup_entities, swim_jet_devices):
+    # Surf paused (dp 22 = 14, mode 5): resuming writes <mode 5, running 13> →
+    # bytes [5,0,13,0] → "BQANAA==".
+    devs = _with_dps(swim_jet_devices[0], {"22": 14, "21": 5})
+    entities, client = setup_entities("switch", devs)
+    pause = _by_name(entities, "Pause")
+    assert pause.is_on is True
+    asyncio.run(pause.async_turn_off())
+    assert client.calls == [(devs[0]["id"], "20", "BQANAA==")]
+
+
+def test_pause_noop_when_off(setup_entities, swim_jet_devices):
+    # dp 22 = 0 (off): pausing does nothing (nothing running to suspend).
+    entities, client = setup_entities("switch", swim_jet_devices)
+    asyncio.run(_by_name(entities, "Pause").async_turn_on())
+    assert client.calls == []

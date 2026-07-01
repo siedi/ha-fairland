@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import base64
+import struct
 from typing import TYPE_CHECKING, Any
 
 from homeassistant.components.switch import SwitchEntity
@@ -72,6 +74,27 @@ CATEGORY_SWITCH_TYPES = {
     POOL_SURFER_CATEGORY_CODE: POOL_SURFER_SWITCH_TYPES,
 }
 
+# Swim-jet pause control (#85). The dp 22 state machine has a suspend state
+# per mode family (the manual's Mode-button pause). Pausing/resuming writes
+# the packed dp 20 "Mode + Status" field (like the mode select), keeping the
+# current mode and toggling only the run state between running and suspend:
+#   free    running 3 <-> suspend 4
+#   timer   running 8 <-> suspend 9
+#   training/surf/custom running 13 <-> suspend 14
+# Only the training/surf suspend (14) is observed in a diagnostic; free/timer
+# follow the same running+1 pattern.
+SWIM_JET_MODE_STATUS_DP = "20"
+SWIM_JET_STATUS_DP = "22"
+SWIM_JET_MODE_DP = "21"
+SWIM_JET_SUSPEND_FOR_RUNNING = {3: 4, 8: 9, 13: 14}
+SWIM_JET_RESUME_FOR_SUSPEND = {4: 3, 9: 8, 14: 13}
+SWIM_JET_SUSPEND_STATES = frozenset(SWIM_JET_RESUME_FOR_SUSPEND)
+
+
+def _pack_mode_status(mode: int, status: int) -> str:
+    """Pack a swim-jet <mode, status> pair into the base64 dp 20 raw value."""
+    return base64.b64encode(struct.pack("<HH", mode, status)).decode()
+
 
 def _coerce_bool(raw: Any) -> bool:
     """Coerce a dpValue (bool / 0|1 / "0"|"1"|"on") to a switch state."""
@@ -113,6 +136,20 @@ async def async_setup_entry(
                     device_info=device_info,
                     dp_id=dp_id,
                     config=config,
+                )
+            )
+
+        # Swim jet: add a Pause switch alongside the Power switch when the
+        # state machine (dp 22) and the mode/status write field (dp 20) exist.
+        if (
+            device_info.get("categoryCode") == POOL_SURFER_CATEGORY_CODE
+            and SWIM_JET_STATUS_DP in dp_map
+            and SWIM_JET_MODE_STATUS_DP in dp_map
+        ):
+            entities.append(
+                FairlandSwimJetPauseSwitch(
+                    coordinator=entry.runtime_data.coordinator,
+                    device_info=device_info,
                 )
             )
     async_add_entities(entities, True)
@@ -244,3 +281,107 @@ class FairlandSwitch(FairlandEntity, SwitchEntity):
     async def async_turn_off(self, **kwargs) -> None:
         """Turn the switch off."""
         await self._async_write(False)
+
+
+class FairlandSwimJetPauseSwitch(FairlandEntity, SwitchEntity):
+    """Pause/resume switch for the swim jet (#85).
+
+    On = the jet is suspended (paused). Toggling writes the packed dp 20
+    "Mode + Status" field, keeping the current mode and switching only the run
+    state between running and suspend. It is a no-op when the jet is off or
+    already in the requested state.
+    """
+
+    _attr_has_entity_name = True
+    _attr_icon = "mdi:pause"
+
+    def __init__(
+        self,
+        coordinator: FairlandDataUpdateCoordinator,
+        device_info: dict[str, Any],
+    ) -> None:
+        """Initialize the pause switch."""
+        super().__init__(coordinator)
+
+        self._device_info = device_info
+        self._device_id = device_info["id"]
+        self._attr_name = "Pause"
+        self._attr_unique_id = f"{DOMAIN}_{self._device_id}_pause"
+
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, self._device_id)},
+            name=device_info["deviceName"],
+            manufacturer="Fairland",
+            model=device_info.get("deviceName", "Unknown"),
+            sw_version=device_info.get("version", "Unknown"),
+        )
+
+    @property
+    def available(self) -> bool:
+        """Return if entity is available."""
+        return self.coordinator.last_update_success
+
+    def _read_int(self, dp_id: str) -> int | None:
+        """Return a dp's current integer value, honoring pending writes."""
+        for dp in self._device_info.get("dps", []):
+            if dp["dpId"] == dp_id:
+                raw = self._effective_dp_value(dp_id, dp.get("dpValue"))
+                try:
+                    return int(raw)
+                except (TypeError, ValueError):
+                    return None
+        return None
+
+    @property
+    def is_on(self) -> bool:
+        """Return true if the jet is currently suspended (paused)."""
+        return self._read_int(SWIM_JET_STATUS_DP) in SWIM_JET_SUSPEND_STATES
+
+    async def _write_status(self, status: int) -> None:
+        """Write <current mode, status> to the packed dp 20 field."""
+        mode = self._read_int(SWIM_JET_MODE_DP) or 0
+        try:
+            await self.coordinator.config_entry.runtime_data.client.set_device_status(
+                self._device_id,
+                SWIM_JET_MODE_STATUS_DP,
+                _pack_mode_status(mode, status),
+            )
+            # Hold the new run state optimistically until the cloud catches up
+            # (#77); is_on reads dp 22, so the pending write is noted there.
+            self._note_pending_write(SWIM_JET_STATUS_DP, status)
+            self.async_write_ha_state()
+            self._schedule_write_refresh()
+        except (FairlandApiClientCommunicationError, FairlandApiClientError) as ex:
+            LOGGER.error("Error setting swim-jet pause state: %s", ex)
+
+    async def async_turn_on(self, **kwargs) -> None:
+        """Pause: suspend the currently running mode."""
+        status = self._read_int(SWIM_JET_STATUS_DP)
+        target = SWIM_JET_SUSPEND_FOR_RUNNING.get(status)
+        if target is None:
+            LOGGER.debug("Pause ignored: swim jet not running (status=%s)", status)
+            return
+        await self._write_status(target)
+
+    async def async_turn_off(self, **kwargs) -> None:
+        """Resume: return the suspended mode to running."""
+        status = self._read_int(SWIM_JET_STATUS_DP)
+        target = SWIM_JET_RESUME_FOR_SUSPEND.get(status)
+        if target is None:
+            LOGGER.debug("Resume ignored: swim jet not paused (status=%s)", status)
+            return
+        await self._write_status(target)
+
+    async def async_added_to_hass(self) -> None:
+        """When entity is added to hass."""
+        self.async_on_remove(
+            self.coordinator.async_add_listener(self._handle_coordinator_update)
+        )
+
+    def _handle_coordinator_update(self) -> None:
+        """Handle updated data from the coordinator."""
+        for device in self.coordinator.data:
+            if device["id"] == self._device_id:
+                self._device_info = device
+                self.async_write_ha_state()
+                break
