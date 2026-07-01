@@ -617,13 +617,17 @@ POOL_SURFER_SENSOR_TYPES = {
         "device_class": None,
         "state_class": SensorStateClass.MEASUREMENT,
     },
-    # Electrical telemetry (all diagnostic).
+    # Electrical telemetry (all diagnostic). Motor Power (dp 12) is diagnostic
+    # like the rest: this firmware reports it as 0 even while running (the
+    # on/off/mode diagnostics all showed 0 W), so it should not sit on the
+    # main sensor card as a primary reading.
     "12": {
         "name": "Motor Power",
         "unit": UnitOfPower.WATT,
         "icon": "mdi:flash",
         "device_class": SensorDeviceClass.POWER,
         "state_class": SensorStateClass.MEASUREMENT,
+        "entity_category": EntityCategory.DIAGNOSTIC,
     },
     "9": {
         "name": "Motor Speed",
