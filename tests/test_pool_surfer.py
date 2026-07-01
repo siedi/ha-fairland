@@ -51,6 +51,13 @@ def test_sensor_dps_created(setup_entities, swim_jet_devices):
     }
 
 
+def test_motor_power_is_diagnostic(setup_entities, swim_jet_devices):
+    # dp 12 reads 0 W even while running on this firmware, so it lives in the
+    # diagnostic section rather than on the main sensor card.
+    dps = _by_dp(setup_entities("sensor", swim_jet_devices)[0])
+    assert dps["12"]._attr_entity_category == "DIAGNOSTIC"
+
+
 def test_fault_code_raw_value(setup_entities, swim_jet_devices):
     # dp 4 is the raw fault-code register (0 = OK), shown verbatim with no
     # code->text interpretation.
@@ -152,11 +159,27 @@ def test_mode_options_by_int_key(setup_entities, swim_jet_devices):
     assert mode._attr_current_option == "free_or_timed"
 
 
-def test_mode_write_sends_int(setup_entities, swim_jet_devices):
+def test_mode_write_packs_dp20(setup_entities, swim_jet_devices):
+    # Writing dp 21 alone does nothing on the device; the mode change goes
+    # through the packed dp 20 "Mode + Status" field. "surf" = mode 5, running
+    # status 13 -> bytes [5,0,13,0] -> base64 "BQANAA==".
     entities, client = setup_entities("select", swim_jet_devices)
     asyncio.run(_by_dp(entities)["21"].async_select_option("surf"))
-    # "surf" maps to firmware int 5.
-    assert client.calls == [(swim_jet_devices[0]["id"], "21", 5)]
+    assert client.calls == [(swim_jet_devices[0]["id"], "20", "BQANAA==")]
+
+
+def test_mode_write_free_packs_free_running(setup_entities, swim_jet_devices):
+    # "free_or_timed" = mode 0, running status 3 -> [0,0,3,0] -> "AAADAA==".
+    entities, client = setup_entities("select", swim_jet_devices)
+    asyncio.run(_by_dp(entities)["21"].async_select_option("free_or_timed"))
+    assert client.calls == [(swim_jet_devices[0]["id"], "20", "AAADAA==")]
+
+
+def test_mode_write_training2_packs_dp20(setup_entities, swim_jet_devices):
+    # "training_2" = mode 2, running status 13 -> [2,0,13,0] -> "AgANAA==".
+    entities, client = setup_entities("select", swim_jet_devices)
+    asyncio.run(_by_dp(entities)["21"].async_select_option("training_2"))
+    assert client.calls == [(swim_jet_devices[0]["id"], "20", "AgANAA==")]
 
 
 # --------------------------------------------------------------------------

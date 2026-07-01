@@ -14,7 +14,9 @@ for the duration configured by the ``Backwash Duration`` number entity
 
 from __future__ import annotations
 
+import base64
 import json
+import struct
 from typing import TYPE_CHECKING, Any
 
 from homeassistant.components.select import SelectEntity
@@ -141,6 +143,15 @@ SAND_CYLINDER_SELECT_TYPES: dict[str, dict[str, Any]] = {
 # dpPropertyNameLanguage, so options map by the integer key rather than the
 # label (the same approach the sandCylinder selects use).
 #
+# The current mode is *read* from dp 21, but writing dp 21 alone does not
+# switch the mode (confirmed on a real device, #85). The mode change must go
+# through the packed "Mode + Status" raw field dp 20, two little-endian
+# uint16s: mode (= dp 21) and the run state (= dp 22). So a write builds
+# dp 20 = <mode, running-status> and sends it base64-encoded. The running
+# status is 3 (FREE_MODE_RUNNING) for free mode and 13 (TRAINING_MODE_RUNNING)
+# for the training/surf/custom modes, matching what the on/off/mode
+# diagnostics reported. `option_to_mode_status` maps each option to that pair.
+#
 # NOTE: selecting a training/surf program starts the jet running it.
 POOL_SURFER_SELECT_TYPES: dict[str, dict[str, Any]] = {
     "21": {
@@ -154,6 +165,16 @@ POOL_SURFER_SELECT_TYPES: dict[str, dict[str, Any]] = {
             4: "training_4",
             5: "surf",
             6: "custom",
+        },
+        "write_raw_dp": "20",
+        "option_to_mode_status": {
+            "free_or_timed": (0, 3),
+            "training_1": (1, 13),
+            "training_2": (2, 13),
+            "training_3": (3, 13),
+            "training_4": (4, 13),
+            "surf": (5, 13),
+            "custom": (6, 13),
         },
     },
 }
@@ -400,6 +421,10 @@ class FairlandDpSelect(FairlandEntity, SelectEntity):
         self._int_to_option_override = config.get("int_to_option")
         self._int_to_option: dict[int, str] = {}
         self._option_to_int: dict[str, int] = {}
+        # Swim-jet mode: written via the packed dp 20 raw field instead of the
+        # read dp (writing dp 21 alone does nothing). See POOL_SURFER_SELECT_TYPES.
+        self._write_raw_dp = config.get("write_raw_dp")
+        self._option_mode_status = config.get("option_to_mode_status")
 
         self._attr_icon = config.get("icon")
         self._attr_translation_key = config.get("translation_key")
@@ -455,11 +480,26 @@ class FairlandDpSelect(FairlandEntity, SelectEntity):
             )
             return
         target_int = self._option_to_int[option]
+        # Normally the option's integer is written straight to the read dp.
+        # For the swim-jet mode, the device only reacts to the packed dp 20
+        # "Mode + Status" field, so build <mode, running-status> as two
+        # little-endian uint16s and send it base64-encoded. Either way the
+        # pending write is noted on the read dp (dp 21 == mode) so the option
+        # holds optimistically until the device reports the new mode back.
+        if self._write_raw_dp is not None and self._option_mode_status is not None:
+            mode, status = self._option_mode_status[option]
+            write_dp = self._write_raw_dp
+            write_value: Any = base64.b64encode(
+                struct.pack("<HH", mode, status)
+            ).decode()
+        else:
+            write_dp = self._dp_id
+            write_value = target_int
         try:
             await self.coordinator.config_entry.runtime_data.client.set_device_status(
                 self._device_id,
-                self._dp_id,
-                target_int,
+                write_dp,
+                write_value,
             )
             # Optimistisch setzen; die Cloud meldet den neuen Wert erst nach
             # 2-4 s zurück (#77).
