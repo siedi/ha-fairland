@@ -27,6 +27,20 @@ class FairlandApiClientAuthenticationError(
     """Exception to indicate an authentication error."""
 
 
+def _devices_from_group_response(data: dict) -> list:
+    """Return owned and shared devices from a deviceAllGroupInfo response.
+
+    The cloud splits a courtyard's devices into ``bindDeviceInfos`` (devices
+    owned/bound by this account) and ``shareDeviceInfos`` (devices shared TO
+    this account by someone else). An account that only has a device shared to
+    it gets an empty ``bindDeviceInfos`` and would otherwise see no devices at
+    all (#92). Shared devices carry the same fields and are read and controlled
+    exactly like owned ones (verified: reads and writes work without a shareId),
+    so we surface both lists.
+    """
+    return (data.get("bindDeviceInfos") or []) + (data.get("shareDeviceInfos") or [])
+
+
 def _verify_response_or_raise(response: aiohttp.ClientResponse) -> None:
     """Verify that the response is valid."""
     if response.status in (401, 403):
@@ -272,7 +286,7 @@ class FairlandApiClient:
                 "shareId": None,
             },
         )
-        return data["bindDeviceInfos"]  # Geräteliste zurückgeben
+        return _devices_from_group_response(data)
 
     async def get_device_status(self, device_id: str) -> Any:
         """Get device status."""
