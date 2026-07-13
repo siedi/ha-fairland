@@ -22,6 +22,7 @@ from .api import FairlandApiClientCommunicationError, FairlandApiClientError
 from .const import (
     DOMAIN,
     HEAT_PUMP_CATEGORY_CODE,
+    INTER_JET_LITHIUM_CATEGORY_CODE,
     LOGGER,
     POOL_SURFER_CATEGORY_CODE,
     SALT_MACHINE_CATEGORY_CODE,
@@ -327,6 +328,24 @@ POOL_SURFER_NUMBER_TYPES = {
 }
 
 
+# Battery swim jet (interjetlithium, issue #94) writable dps. The firmware
+# exposes only two controls: the mode (dp 4, on the select platform) and
+# dp 7 "Timer Settings". dp 7 carries no firmware unit, but seconds matches
+# both its dpProperty range (0-5400, step 900) and the runtimes the hardware
+# timer button offers (15-90 min in 15-min steps, per the user manual).
+INTER_JET_NUMBER_TYPES = {
+    "7": {
+        "name": "Timer Settings",
+        "unit": UnitOfTime.SECONDS,
+        "icon": "mdi:timer-cog",
+        "min": 0,
+        "max": 5400,
+        "step": 900,
+        "mode": NumberMode.BOX,
+    },
+}
+
+
 # Firmware-reported time units (dpProperty "unit") we trust to override a
 # default time unit: the backwash duration comes in seconds on some pumps
 # (e.g. InverFlow(L), issue #77) and minutes on others.
@@ -359,6 +378,8 @@ async def async_setup_entry(
             number_types = SAND_CYLINDER_NUMBER_TYPES
         elif category == POOL_SURFER_CATEGORY_CODE:
             number_types = POOL_SURFER_NUMBER_TYPES
+        elif category == INTER_JET_LITHIUM_CATEGORY_CODE:
+            number_types = INTER_JET_NUMBER_TYPES
         else:
             continue
 

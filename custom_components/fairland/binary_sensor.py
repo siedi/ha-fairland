@@ -24,6 +24,7 @@ from homeassistant.helpers.entity import DeviceInfo, EntityCategory
 
 from .const import (
     DOMAIN,
+    INTER_JET_LITHIUM_CATEGORY_CODE,
     LOGGER,
     POOL_SURFER_CATEGORY_CODE,
     SALT_MACHINE_CATEGORY_CODE,
@@ -118,10 +119,21 @@ POOL_SURFER_BINARY_SENSOR_TYPES: dict[str, dict[str, Any]] = {
     },
 }
 
+# Battery swim jet (interjetlithium, issue #94). dp 10 "Charging status" is a
+# plain firmware bool (true = charging), so no inversion.
+INTER_JET_BINARY_SENSOR_TYPES: dict[str, dict[str, Any]] = {
+    "10": {
+        "name": "Charging",
+        "icon": "mdi:battery-charging",
+        "device_class": BinarySensorDeviceClass.BATTERY_CHARGING,
+    },
+}
+
 CATEGORY_BINARY_SENSOR_TYPES = {
     SALT_MACHINE_CATEGORY_CODE: SALT_MACHINE_BINARY_SENSOR_TYPES,
     WATER_PUMP_CATEGORY_CODE: WATER_PUMP_BINARY_SENSOR_TYPES,
     POOL_SURFER_CATEGORY_CODE: POOL_SURFER_BINARY_SENSOR_TYPES,
+    INTER_JET_LITHIUM_CATEGORY_CODE: INTER_JET_BINARY_SENSOR_TYPES,
 }
 
 

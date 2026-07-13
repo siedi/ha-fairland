@@ -121,6 +121,18 @@
           "surf": "Surf mode",
           "custom": "Custom"
         }
+      },
+      "inter_jet_mode": {
+        "name": "Mode",
+        "state": {
+          "p0_standby": "P0 (Standby)",
+          "p1": "P1",
+          "p2": "P2",
+          "p3": "P3",
+          "p4": "P4",
+          "pe_turbo": "PE (Turbo, 5 min)",
+          "pf_surf": "PF (Surf)"
+        }
       }
     }
   }

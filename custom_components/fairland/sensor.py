@@ -25,6 +25,7 @@ from homeassistant.helpers.entity import DeviceInfo, EntityCategory
 from .const import (
     DOMAIN,
     HEAT_PUMP_CATEGORY_CODE,
+    INTER_JET_LITHIUM_CATEGORY_CODE,
     LOGGER,
     POOL_SURFER_CATEGORY_CODE,
     SALT_MACHINE_CATEGORY_CODE,
@@ -713,6 +714,125 @@ POOL_SURFER_SENSOR_TYPES = {
 }
 
 
+# Battery/lithium counter-current swim jet (interjetlithium, issue #94).
+# Names come from the firmware's own nameLanguage (en-US); its dpProperty
+# unit strings are Chinese (摄氏度/伏特V/安培A), so units are set here and
+# scale rides the usual scale-from-property path. dp 14 ("Actual speed",
+# 0-2000) carries no firmware unit, so none is applied. The write-only
+# momentary dps (9 clear-fault, 13 trigger-statistics) and the raw swim-time
+# report (11, big-endian <mode, minutes> pairs) are not exposed.
+INTER_JET_SENSOR_TYPES = {
+    "3": {
+        "name": "Battery Level",
+        "unit": PERCENTAGE,
+        "icon": "mdi:battery",
+        "device_class": SensorDeviceClass.BATTERY,
+        "state_class": SensorStateClass.MEASUREMENT,
+    },
+    "14": {
+        "name": "Actual Speed",
+        "unit": None,
+        "icon": "mdi:fan",
+        "device_class": None,
+        "state_class": SensorStateClass.MEASUREMENT,
+    },
+    "1": {
+        "name": "Model",
+        "unit": None,
+        "icon": "mdi:identifier",
+        "device_class": SensorDeviceClass.ENUM,
+        "state_class": None,
+        "is_enum": True,
+        "entity_category": EntityCategory.DIAGNOSTIC,
+    },
+    # Battery telemetry (all diagnostic).
+    "18": {
+        "name": "Battery Cell Temperature",
+        "unit": UnitOfTemperature.CELSIUS,
+        "icon": "mdi:battery-heart-variant",
+        "device_class": SensorDeviceClass.TEMPERATURE,
+        "state_class": SensorStateClass.MEASUREMENT,
+        "entity_category": EntityCategory.DIAGNOSTIC,
+    },
+    "19": {
+        "name": "Battery Voltage",
+        "unit": UnitOfElectricPotential.VOLT,
+        "icon": "mdi:battery-outline",
+        "device_class": SensorDeviceClass.VOLTAGE,
+        "state_class": SensorStateClass.MEASUREMENT,
+        "entity_category": EntityCategory.DIAGNOSTIC,
+    },
+    "20": {
+        "name": "Battery Current",
+        "unit": UnitOfElectricCurrent.AMPERE,
+        "icon": "mdi:current-dc",
+        "device_class": SensorDeviceClass.CURRENT,
+        "state_class": SensorStateClass.MEASUREMENT,
+        "entity_category": EntityCategory.DIAGNOSTIC,
+    },
+    "24": {
+        "name": "Battery Cycle Count",
+        "unit": None,
+        "icon": "mdi:battery-sync",
+        "device_class": None,
+        "state_class": SensorStateClass.MEASUREMENT,
+        "entity_category": EntityCategory.DIAGNOSTIC,
+    },
+    "23": {
+        "name": "Battery Firmware Version",
+        "unit": None,
+        "icon": "mdi:chip",
+        "device_class": None,
+        "state_class": None,
+        "entity_category": EntityCategory.DIAGNOSTIC,
+    },
+    # Motor/driver telemetry (all diagnostic).
+    "15": {
+        "name": "Driver Temperature",
+        "unit": UnitOfTemperature.CELSIUS,
+        "icon": "mdi:thermometer",
+        "device_class": SensorDeviceClass.TEMPERATURE,
+        "state_class": SensorStateClass.MEASUREMENT,
+        "entity_category": EntityCategory.DIAGNOSTIC,
+    },
+    "16": {
+        "name": "Bus Voltage",
+        "unit": UnitOfElectricPotential.VOLT,
+        "icon": "mdi:sine-wave",
+        "device_class": SensorDeviceClass.VOLTAGE,
+        "state_class": SensorStateClass.MEASUREMENT,
+        "entity_category": EntityCategory.DIAGNOSTIC,
+    },
+    "17": {
+        "name": "Bus Current",
+        "unit": UnitOfElectricCurrent.AMPERE,
+        "icon": "mdi:current-ac",
+        "device_class": SensorDeviceClass.CURRENT,
+        "state_class": SensorStateClass.MEASUREMENT,
+        "entity_category": EntityCategory.DIAGNOSTIC,
+    },
+    # Lifetime counters. state_class stays MEASUREMENT: the registers are
+    # capped at 255 in dpProperty, so a TOTAL_INCREASING would corrupt
+    # long-term statistics when they wrap.
+    "21": {
+        "name": "Hard Boot Count",
+        "unit": None,
+        "icon": "mdi:restart",
+        "device_class": None,
+        "state_class": SensorStateClass.MEASUREMENT,
+        "entity_category": EntityCategory.DIAGNOSTIC,
+    },
+    "22": {
+        "name": "Soft Boot Count",
+        "unit": None,
+        "icon": "mdi:restart",
+        "device_class": None,
+        "state_class": SensorStateClass.MEASUREMENT,
+        "entity_category": EntityCategory.DIAGNOSTIC,
+    },
+}
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: FairlandConfigEntry,
@@ -739,6 +859,8 @@ async def async_setup_entry(
             sensor_types = SAND_CYLINDER_SENSOR_TYPES
         elif category == POOL_SURFER_CATEGORY_CODE:
             sensor_types = POOL_SURFER_SENSOR_TYPES
+        elif category == INTER_JET_LITHIUM_CATEGORY_CODE:
+            sensor_types = INTER_JET_SENSOR_TYPES
         else:
             continue
 

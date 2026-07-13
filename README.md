@@ -25,7 +25,7 @@ This integration enables monitoring and control of Fairland pool equipment in Ho
 * Fairland Inverflow Plus pool pumps on the iGarden platform
 * Fairland inverter salt chlorinators (i-Salt and OEM rebrands) on the iGarden platform
 * Multiport valve / sand-filter controllers on the iGarden platform
-* iGarden Swim Jet counter-current swimming machines
+* iGarden Swim Jet counter-current swimming machines, including the battery-powered X-series (X35-P30 … X20-P10)
 * OEM-rebadged variants of the above — Madimack pool pumps (e.g. Inverflow Plus 1.5hp) are Fairland OEM rebrands and run on the same iGarden cloud, so they are supported as well
 
 ## Features
@@ -118,6 +118,13 @@ The integration creates a range of entities depending on the type of device disc
 * **Speed** (number), plus the per-mode default speed and timer duration
 * **Driver Board Fault** (binary sensor)
 * Sensors: status, model, session distance/duration/intensity, motor power, motor and commanded speed, bus voltage, motor/bus current and the internal temperatures (diagnostic)
+
+### For battery swim jets (X-series)
+
+* **Mode** (select) — P0 standby, flow speeds P1–P4, PE turbo and PF surf. The firmware provides no names for these modes; the labels follow the official user manual and are still being verified against the cloud (see #94)
+* **Timer Settings** (number) — session runtime in 15-minute steps, matching the hardware timer button
+* **Charging** (binary sensor)
+* Sensors: battery level, actual speed, model, and diagnostic battery/driver telemetry (cell temperature, battery voltage/current, cycle count, driver temperature, bus voltage/current, boot counters)
 
 ## Energy Monitoring
 

@@ -26,6 +26,7 @@ from homeassistant.util import slugify
 from .api import FairlandApiClientCommunicationError, FairlandApiClientError
 from .const import (
     DOMAIN,
+    INTER_JET_LITHIUM_CATEGORY_CODE,
     LOGGER,
     POOL_SURFER_CATEGORY_CODE,
     SALT_MACHINE_CATEGORY_CODE,
@@ -180,6 +181,33 @@ POOL_SURFER_SELECT_TYPES: dict[str, dict[str, Any]] = {
 }
 
 
+# Battery swim jet (interjetlithium, issue #94). dp 4 "Mode Settings" is a
+# plain value dp (0-4) whose dpProperty carries NO labels, so options map by
+# integer key. The labels come from the official Swim Jet X user manual and
+# app: the mode dial shows positions 0/1/2/3/4/E/F, where P1-P4 are flow
+# speeds low to high, PE is a 5-minute turbo and PF a surf program that
+# cycles the flow; 0 (P0) is the no-flow standby position. The dpProperty
+# max of 4 may be stale (the poolSurfer enums were), so PE/PF are offered as
+# 5/6 pending on-device verification (tracked in #94) — like the P0-P4
+# mapping itself, which matches the manual but has not been confirmed
+# against the cloud yet.
+INTER_JET_SELECT_TYPES: dict[str, dict[str, Any]] = {
+    "4": {
+        "translation_key": "inter_jet_mode",
+        "icon": "mdi:swim",
+        "int_to_option": {
+            0: "p0_standby",
+            1: "p1",
+            2: "p2",
+            3: "p3",
+            4: "p4",
+            5: "pe_turbo",
+            6: "pf_surf",
+        },
+    },
+}
+
+
 def _enum_int_keys(dp: dict[str, Any]) -> set[int]:
     """Return the set of integer enum keys advertised in a dp's dpProperty."""
     try:
@@ -279,11 +307,13 @@ async def async_setup_entry(
             SALT_MACHINE_CATEGORY_CODE,
             SAND_CYLINDER_CATEGORY_CODE,
             POOL_SURFER_CATEGORY_CODE,
+            INTER_JET_LITHIUM_CATEGORY_CODE,
         ):
             select_types = {
                 SALT_MACHINE_CATEGORY_CODE: SALT_MACHINE_SELECT_TYPES,
                 SAND_CYLINDER_CATEGORY_CODE: SAND_CYLINDER_SELECT_TYPES,
                 POOL_SURFER_CATEGORY_CODE: POOL_SURFER_SELECT_TYPES,
+                INTER_JET_LITHIUM_CATEGORY_CODE: INTER_JET_SELECT_TYPES,
             }[category]
             dp_ids = {dp.get("dpId") for dp in device_info["dps"]}
             for dp_id, config in select_types.items():

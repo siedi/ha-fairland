@@ -1,0 +1,141 @@
+{
+  "id": "1000000000000000094",
+  "deviceName": "Test Battery Swim Jet",
+  "categoryCode": "interjetlithium",
+  "version": null,
+  "dps": [
+    {
+      "dpId": "1",
+      "dpValue": 1,
+      "dpProperty": "{\"0\": \"X35-P30\", \"1\": \"X30-P30\", \"2\": \"X30-P15\", \"3\": \"X25-P15\", \"4\": \"X20-P10\"}",
+      "dpMode": "ro",
+      "dpType": "enum"
+    },
+    {
+      "dpId": "3",
+      "dpValue": 33,
+      "dpProperty": "{\"max\": 100, \"min\": 0, \"init\": 0, \"step\": 1, \"unit\": \"%\", \"scale\": 0}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "4",
+      "dpValue": 0,
+      "dpProperty": "{\"max\": 4, \"min\": 0, \"init\": 0, \"step\": 1, \"scale\": 0}",
+      "dpMode": "rw",
+      "dpType": "value"
+    },
+    {
+      "dpId": "7",
+      "dpValue": 0,
+      "dpProperty": "{\"max\": 5400, \"min\": 0, \"init\": 0, \"step\": 900, \"scale\": 0}",
+      "dpMode": "rw",
+      "dpType": "value"
+    },
+    {
+      "dpId": "9",
+      "dpValue": null,
+      "dpProperty": "{\"true\": \"1\", \"false\": \"0\"}",
+      "dpMode": "wo",
+      "dpType": "bool"
+    },
+    {
+      "dpId": "10",
+      "dpValue": false,
+      "dpProperty": "{\"true\": \"1\", \"false\": \"0\"}",
+      "dpMode": "ro",
+      "dpType": "bool"
+    },
+    {
+      "dpId": "11",
+      "dpValue": "AAEAPAACAAoAAAAAAAAAAAAAAAAAAAAA",
+      "dpProperty": "{}",
+      "dpMode": "ro",
+      "dpType": "raw"
+    },
+    {
+      "dpId": "13",
+      "dpValue": true,
+      "dpProperty": "{\"true\": \"1\", \"false\": \"0\"}",
+      "dpMode": "wo",
+      "dpType": "bool"
+    },
+    {
+      "dpId": "14",
+      "dpValue": 0,
+      "dpProperty": "{\"max\": 2000, \"min\": 0, \"init\": 0, \"step\": 1, \"scale\": 0}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "15",
+      "dpValue": 279,
+      "dpProperty": "{\"max\": 1000, \"min\": 0, \"init\": 0, \"step\": 1, \"unit\": \"摄氏度\", \"scale\": 1}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "16",
+      "dpValue": 250,
+      "dpProperty": "{\"max\": 300, \"min\": 0, \"init\": 0, \"step\": 1, \"unit\": \"伏特V\", \"scale\": 1}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "17",
+      "dpValue": 0,
+      "dpProperty": "{\"max\": 1000, \"min\": 0, \"init\": 0, \"step\": 1, \"unit\": \"安培A\", \"scale\": 1}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "18",
+      "dpValue": 381,
+      "dpProperty": "{\"max\": 800, \"min\": -200, \"init\": 0, \"step\": 1, \"unit\": \"摄氏度\", \"scale\": 1}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "19",
+      "dpValue": 2504,
+      "dpProperty": "{\"max\": 3000, \"min\": 0, \"init\": 0, \"step\": 1, \"unit\": \"伏特V\", \"scale\": 2}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "20",
+      "dpValue": 2,
+      "dpProperty": "{\"max\": 10000, \"min\": 0, \"init\": 0, \"step\": 1, \"unit\": \"安培A\", \"scale\": 2}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "21",
+      "dpValue": 30,
+      "dpProperty": "{\"max\": 255, \"min\": 0, \"init\": 0, \"step\": 1, \"unit\": \"次\", \"scale\": 0}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "22",
+      "dpValue": 32,
+      "dpProperty": "{\"max\": 255, \"min\": 0, \"init\": 0, \"step\": 1, \"scale\": 0}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "23",
+      "dpValue": 34,
+      "dpProperty": "{\"max\": 255, \"min\": \"0\", \"init\": \"0\", \"step\": \"1\", \"unit\": \"\", \"scale\": \"0\"}",
+      "dpMode": "ro",
+      "dpType": "value"
+    },
+    {
+      "dpId": "24",
+      "dpValue": 2,
+      "dpProperty": "{\"max\": 1000, \"min\": \"0\", \"init\": \"0\", \"step\": \"1\", \"unit\": \"\", \"scale\": \"0\"}",
+      "dpMode": "ro",
+      "dpType": "value"
+    }
+  ]
+}

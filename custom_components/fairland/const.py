@@ -40,6 +40,10 @@ SAND_CYLINDER_CATEGORY_CODE = "sandCylinder"
 # Counter-current swim jet (Fairland/iGarden "Swim Jet", productCode
 # iupstream1, issue #85). Yet another wholly separate dpId namespace.
 POOL_SURFER_CATEGORY_CODE = "poolSurfer"
+# Battery/lithium counter-current swim jet (X-series: X35-P30 .. X20-P10,
+# productCode lithiumjetx30p30, issue #94). NOT the same namespace as the
+# mains-powered poolSurfer SJ jets.
+INTER_JET_LITHIUM_CATEGORY_CODE = "interjetlithium"
 
 # Pool-pump flow values (dp 101/106/107/112) are reported in the unit the
 # user selects via dp 110, so flow entities derive their unit from it rather
