@@ -28,6 +28,10 @@ updates:
       # every pip patch release is pure noise (security updates still come
       # through regardless of this ignore)
       - dependency-name: "pip"
+      # pycares is deliberately capped at <5: aiodns 3.5.0 (pulled in by the
+      # pinned homeassistant) breaks with pycares >= 5 (Channel.getaddrinfo
+      # signature changed). Don't let Dependabot raise the ceiling.
+      - dependency-name: "pycares"
     groups:
       pip-dependencies:
         patterns:
