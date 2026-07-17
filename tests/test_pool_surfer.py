@@ -282,3 +282,26 @@ def test_pause_noop_when_off(setup_entities, swim_jet_devices):
     entities, client = setup_entities("switch", swim_jet_devices)
     asyncio.run(_by_name(entities, "Pause").async_turn_on())
     assert client.calls == []
+
+
+# --------------------------------------------------------------------------
+# Start Timer button (dp 20 <mode 0, status 8>, issue #96)
+# --------------------------------------------------------------------------
+def test_start_timer_button_created(setup_entities, swim_jet_devices):
+    entities, _ = setup_entities("button", swim_jet_devices)
+    assert [e._attr_name for e in entities] == ["Start Timer"]
+
+
+def test_start_timer_button_writes_timing_running(setup_entities, swim_jet_devices):
+    # Timer mode = <mode 0, status 8 TIMING_MODE_RUNNING> → bytes [0,0,8,0] →
+    # "AAAIAA==". Distinct from the mode select's Free write ("AAADAA==").
+    entities, client = setup_entities("button", swim_jet_devices)
+    asyncio.run(entities[0].async_press())
+    assert client.calls == [(swim_jet_devices[0]["id"], "20", "AAAIAA==")]
+
+
+def test_no_button_for_other_categories(setup_entities):
+    # Strictly poolSurfer-only: a heat pump gets no Start Timer button.
+    heat_pump = load_fixture("heat_pump.json")
+    entities, _ = setup_entities("button", heat_pump)
+    assert entities == []

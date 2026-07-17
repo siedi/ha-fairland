@@ -125,6 +125,10 @@ def _install_stubs() -> None:
         SwitchEntity=type("SwitchEntity", (), {}),
     )
     _register(
+        "homeassistant.components.button",
+        ButtonEntity=type("ButtonEntity", (), {}),
+    )
+    _register(
         "homeassistant.components.select",
         SelectEntity=type("SelectEntity", (), {}),
     )
@@ -186,6 +190,7 @@ def _load_integration() -> dict[str, types.ModuleType]:
         for name in (
             "sensor",
             "switch",
+            "button",
             "select",
             "number",
             "binary_sensor",
