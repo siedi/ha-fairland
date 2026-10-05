@@ -75,6 +75,15 @@ class _CoordinatorEntity:
         pass
 
 
+class _EventEntity:
+    """Minimal EventEntity: records triggered events instead of firing them."""
+
+    def _trigger_event(self, event_type, event_attributes=None) -> None:
+        if event_type not in self._attr_event_types:
+            raise ValueError(f"Invalid event type {event_type}")
+        self.__dict__.setdefault("triggered", []).append((event_type, event_attributes))
+
+
 def _device_info(**kwargs) -> dict:
     return dict(kwargs)
 
@@ -139,6 +148,10 @@ def _install_stubs() -> None:
         NumberMode=_AttrStr(),
     )
     _register(
+        "homeassistant.components.event",
+        EventEntity=_EventEntity,
+    )
+    _register(
         "homeassistant.components.binary_sensor",
         BinarySensorDeviceClass=_AttrStr(),
         BinarySensorEntity=type("BinarySensorEntity", (), {}),
@@ -183,7 +196,7 @@ def _load_integration() -> dict[str, types.ModuleType]:
         return module
 
     # Dependency order: leaves first.
-    for name in ("const", "api", "data", "coordinator", "entity"):
+    for name in ("const", "api", "data", "coordinator", "entity", "alarms"):
         load(name)
     return {
         name: load(name)
@@ -195,6 +208,7 @@ def _load_integration() -> dict[str, types.ModuleType]:
             "number",
             "binary_sensor",
             "climate",
+            "event",
         )
     }
 

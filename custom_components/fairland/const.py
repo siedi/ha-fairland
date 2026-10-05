@@ -55,5 +55,7 @@ WATER_PUMP_FLOW_UNITS = {0: "m³/h", 1: "L/min", 2: "US gpm", 3: "IMP gpm"}
 # ``alarmStatus`` flag (0/1) in deviceAllGroupInfo, and the cloud keeps a
 # separate alarm history per device (deviceAlarmApi/deviceAlarmPage). Only the
 # newest records are fetched: the endpoint ignores ``pageNum`` (page 2 returns
-# page 1 again), but honors ``pageSize``.
-ALARM_HISTORY_SIZE = 5
+# page 1 again), but honors ``pageSize``. It has to cover all alarms raised
+# within one poll, or the Alarm event entity misses some: a heat pump losing
+# water flow raises a 2-4 s E3 every 6-8 s, i.e. 4-5 per default poll.
+ALARM_HISTORY_SIZE = 10

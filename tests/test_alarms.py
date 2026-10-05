@@ -237,3 +237,87 @@ def test_coordinator_alarm_failure_keeps_telemetry():
     (device,) = _run_coordinator(_Client(alarm_error=error))
     assert device["alarms"] is None
     assert device["dps"] == [{"dpId": "103", "dpValue": 25}]
+
+
+# --------------------------------------------------------------------------
+# Alarm event entity: one event per new history record
+# --------------------------------------------------------------------------
+def _e3(created_ms, code="E3"):
+    record = dict(HEAT_PUMP_E3, createTime=created_ms, clearTime=created_ms + 2000)
+    record["code"] = code
+    return api._alarms_from_page_response({"records": [record]}, DEVICE_ID)[0]
+
+
+def _event_setup(setup_entities, alarms):
+    device = _device(alarms=alarms)
+    entities, _ = setup_entities("event", [device])
+    (entity,) = entities
+    return entity, device
+
+
+def _poll(entity, device, alarms):
+    device["alarms"] = alarms
+    entity._handle_coordinator_update()
+    return [attrs["created"] for _, attrs in entity.__dict__.pop("triggered", [])]
+
+
+def test_event_not_created_without_history_key(setup_entities):
+    entities, _ = setup_entities("event", [_device()])
+    assert entities == []
+
+
+def test_event_does_not_replay_history_at_startup(setup_entities):
+    entity, device = _event_setup(setup_entities, [_e3(2000), _e3(1000)])
+    assert _poll(entity, device, [_e3(2000), _e3(1000)]) == []
+
+
+def test_event_fires_once_per_new_record_oldest_first(setup_entities):
+    # Repeated E3s: the Latest Alarm state stays "E3", the event must fire.
+    entity, device = _event_setup(setup_entities, [_e3(1000)])
+    fired = _poll(entity, device, [_e3(9000), _e3(8000), _e3(1000)])
+    assert fired == [
+        "1970-01-01T00:00:08+00:00",
+        "1970-01-01T00:00:09+00:00",
+    ]
+    assert _poll(entity, device, [_e3(9000), _e3(8000), _e3(1000)]) == []
+
+
+def test_event_attributes(setup_entities):
+    entity, device = _event_setup(setup_entities, [])
+    device["alarms"] = [_e3(5000)]
+    entity._handle_coordinator_update()
+    ((event_type, attrs),) = entity.triggered
+    assert event_type == "alarm"
+    assert attrs["code"] == "E3"
+    assert attrs["description"] == "No water protection"
+    assert attrs["solution"] == "Check whether water flow is normal."
+    assert attrs["level"] == "WARN"
+
+
+def test_event_empty_history_then_first_alarm_fires(setup_entities):
+    entity, device = _event_setup(setup_entities, [])
+    assert _poll(entity, device, [_e3(5000)]) == ["1970-01-01T00:00:05+00:00"]
+
+
+def test_event_failed_history_at_startup_sets_baseline_later(setup_entities):
+    # History unavailable at startup: the first readable page is the baseline.
+    entity, device = _event_setup(setup_entities, None)
+    assert entity.available is False
+    assert _poll(entity, device, [_e3(5000)]) == []
+    assert entity.available is True
+    assert _poll(entity, device, [_e3(6000), _e3(5000)]) == [
+        "1970-01-01T00:00:06+00:00"
+    ]
+
+
+def test_event_failed_poll_does_not_refire(setup_entities):
+    entity, device = _event_setup(setup_entities, [_e3(5000)])
+    assert _poll(entity, device, None) == []
+    assert _poll(entity, device, [_e3(5000)]) == []
+
+
+def test_event_record_dropping_back_onto_page_does_not_refire(setup_entities):
+    # An old record reappearing (page shifted) is older than the newest seen.
+    entity, device = _event_setup(setup_entities, [_e3(5000), _e3(4000)])
+    assert _poll(entity, device, [_e3(5000)]) == []
+    assert _poll(entity, device, [_e3(5000), _e3(4000)]) == []

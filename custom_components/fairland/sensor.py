@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 from homeassistant.components.sensor import (
@@ -35,6 +34,7 @@ from .const import (
     WATER_PUMP_FLOW_UNIT_DP,
     WATER_PUMP_FLOW_UNITS,
 )
+from .alarms import alarm_details, alarm_summary
 from .entity import FairlandEntity
 
 if TYPE_CHECKING:
@@ -938,38 +938,6 @@ async def async_setup_entry(
     async_add_entities(entities, True)
 
 
-def _alarm_text(value: Any) -> str | None:
-    """Pick the English text out of an alarm record's language dict."""
-    if not isinstance(value, dict):
-        return value if isinstance(value, str) and value else None
-    if value.get("en-US"):
-        return value["en-US"]
-    return next((text for text in value.values() if text), None)
-
-
-def _alarm_time(epoch_ms: Any) -> str | None:
-    """Convert an alarm record's epoch-milliseconds timestamp to ISO 8601."""
-    try:
-        return datetime.fromtimestamp(int(epoch_ms) / 1000, tz=UTC).isoformat()
-    except (TypeError, ValueError, OverflowError, OSError):
-        return None
-
-
-def _alarm_summary(record: dict[str, Any]) -> dict[str, Any]:
-    """Condense an alarm record to the fields shown in HA."""
-    clear_status = record.get("clearStatus")
-    return {
-        "code": record.get("code") or record.get("showInfo"),
-        # Heat pumps leave the name empty and put the meaning into reason
-        # (E3 = "No water protection"); chlorinators fill both (#102).
-        "description": _alarm_text(record.get("name"))
-        or _alarm_text(record.get("reason")),
-        "created": _alarm_time(record.get("createTime")),
-        "cleared": None if clear_status is None else clear_status == 1,
-        "cleared_at": _alarm_time(record.get("clearTime")),
-    }
-
-
 class FairlandLatestAlarmSensor(FairlandEntity, SensorEntity):
     """Most recent entry of a device's cloud alarm history (#102).
 
@@ -1019,7 +987,7 @@ class FairlandLatestAlarmSensor(FairlandEntity, SensorEntity):
         alarms = self._alarms()
         if not alarms:
             return None
-        return _alarm_summary(alarms[0])["code"]
+        return alarm_summary(alarms[0])["code"]
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
@@ -1027,13 +995,9 @@ class FairlandLatestAlarmSensor(FairlandEntity, SensorEntity):
         alarms = self._alarms()
         if not alarms:
             return {}
-        latest = alarms[0]
         return {
-            **_alarm_summary(latest),
-            "level": latest.get("level"),
-            "reason": _alarm_text(latest.get("reason")),
-            "solution": _alarm_text(latest.get("solution")),
-            "history": [_alarm_summary(record) for record in alarms],
+            **alarm_details(alarms[0]),
+            "history": [alarm_summary(record) for record in alarms],
         }
 
 
