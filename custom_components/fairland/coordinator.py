@@ -63,6 +63,7 @@ class FairlandDataUpdateCoordinator(DataUpdateCoordinator):
                     # Update the device data
                     updated_device = device.copy()
                     updated_device["dps"] = device_status
+                    updated_device["alarms"] = await self._fetch_alarms(device["id"])
                     updated_devices.append(updated_device)
                 except (FairlandApiClientCommunicationError, FairlandApiClientError):
                     # Keep the old data
@@ -72,3 +73,17 @@ class FairlandDataUpdateCoordinator(DataUpdateCoordinator):
             raise UpdateFailed(f"Error updating data: {ex}") from ex
         else:
             return updated_devices
+
+    async def _fetch_alarms(self, device_id: str) -> list[dict] | None:
+        """Fetch a device's alarm history; None if unavailable.
+
+        Kept separate from the dp fetch so a failing alarm endpoint only makes
+        the alarm history unavailable and never drops the device telemetry.
+        """
+        try:
+            return await self.config_entry.runtime_data.client.get_device_alarms(
+                device_id
+            )
+        except (FairlandApiClientCommunicationError, FairlandApiClientError) as ex:
+            LOGGER.debug("Alarm history unavailable for %s: %s", device_id, ex)
+            return None
