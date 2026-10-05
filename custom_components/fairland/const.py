@@ -50,3 +50,10 @@ INTER_JET_LITHIUM_CATEGORY_CODE = "interjetlithium"
 # than hardcoding one.
 WATER_PUMP_FLOW_UNIT_DP = "110"
 WATER_PUMP_FLOW_UNITS = {0: "m³/h", 1: "L/min", 2: "US gpm", 3: "IMP gpm"}
+
+# Device alarms (issue #102). Every device carries a device-level
+# ``alarmStatus`` flag (0/1) in deviceAllGroupInfo, and the cloud keeps a
+# separate alarm history per device (deviceAlarmApi/deviceAlarmPage). Only the
+# newest records are fetched: the endpoint ignores ``pageNum`` (page 2 returns
+# page 1 again), but honors ``pageSize``.
+ALARM_HISTORY_SIZE = 5

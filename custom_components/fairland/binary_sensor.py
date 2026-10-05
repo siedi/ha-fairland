@@ -1,7 +1,8 @@
 """Binary sensor platform for Fairland integration.
 
-Provides protection/alarm and status indicators for inverter salt
-chlorinators (saltMachine, issue #80). These data points come back as
+Provides the device-level Alarm sensor for every device (issue #102) plus
+protection/alarm and status indicators for inverter salt chlorinators
+(saltMachine, issue #80). These data points come back as
 ``null`` on firmwares that don't implement them, so creation is gated on
 ``require_value`` where appropriate.
 
@@ -147,6 +148,15 @@ async def async_setup_entry(
 
     entities: list[BinarySensorEntity] = []
     for device_info in entry.runtime_data.coordinator.data:
+        # Device-level alarm flag, present on every category (#102).
+        if "alarmStatus" in device_info:
+            entities.append(
+                FairlandAlarmBinarySensor(
+                    coordinator=entry.runtime_data.coordinator,
+                    device_info=device_info,
+                )
+            )
+
         sensor_types = CATEGORY_BINARY_SENSOR_TYPES.get(device_info.get("categoryCode"))
         if sensor_types is None:
             continue
@@ -228,6 +238,54 @@ class FairlandBinarySensor(FairlandEntity, BinarySensorEntity):
                     return None
                 val = _coerce_bool(raw)
                 return (not val) if self._invert else val
+        return None
+
+
+class FairlandAlarmBinarySensor(FairlandEntity, BinarySensorEntity):
+    """Device-level alarm flag (``alarmStatus``) of any Fairland device.
+
+    The cloud sets ``alarmStatus`` while the device has an active alarm,
+    independent of the dps: a chlorinator's A3/E3 air-in-cell alarm (#102)
+    and a heat pump's alarm in the #85 captures both showed up only here.
+    Which alarm it is lives in the alarm history (Latest Alarm sensor).
+    Alarms shorter than the poll interval can be missed by this flag.
+    """
+
+    _attr_has_entity_name = True
+    _attr_name = "Alarm"
+    _attr_icon = "mdi:alert"
+    _attr_device_class = BinarySensorDeviceClass.PROBLEM
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+
+    def __init__(
+        self,
+        coordinator: FairlandDataUpdateCoordinator,
+        device_info: dict[str, Any],
+    ) -> None:
+        """Initialize the alarm sensor."""
+        super().__init__(coordinator)
+
+        self._device_id = device_info["id"]
+        self._attr_unique_id = f"{DOMAIN}_{self._device_id}_alarm"
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, self._device_id)},
+            name=device_info["deviceName"],
+            manufacturer="Fairland",
+            model=device_info.get("deviceName", "Unknown"),
+            sw_version=device_info.get("version", "Unknown"),
+        )
+
+    @property
+    def available(self) -> bool:
+        """Return if entity is available."""
+        return self.coordinator.last_update_success
+
+    @property
+    def is_on(self) -> bool | None:
+        """Return True on alarm; None for a missing or unknown flag value."""
+        for device in self.coordinator.data:
+            if device.get("id") == self._device_id:
+                return {"0": False, "1": True}.get(str(device.get("alarmStatus")))
         return None
 
 

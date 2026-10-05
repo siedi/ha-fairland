@@ -8,7 +8,7 @@ from typing import Any
 
 import aiohttp
 
-from .const import API_REGIONS, DEFAULT_API_REGION, LOGGER
+from .const import ALARM_HISTORY_SIZE, API_REGIONS, DEFAULT_API_REGION, LOGGER
 
 
 class FairlandApiClientError(Exception):
@@ -39,6 +39,40 @@ def _devices_from_group_response(data: dict) -> list:
     so we surface both lists.
     """
     return (data.get("bindDeviceInfos") or []) + (data.get("shareDeviceInfos") or [])
+
+
+# Fields kept from a deviceAlarmPage record. The rest (sn, deviceName,
+# groupName, picture, ...) is either PII or already on the device itself.
+_ALARM_FIELDS = (
+    "code",
+    "level",
+    "name",
+    "showInfo",
+    "reason",
+    "solution",
+    "clearStatus",
+    "createTime",
+    "clearTime",
+)
+
+
+def _alarms_from_page_response(data: Any, device_id: str) -> list[dict] | None:
+    """Return a device's alarm records from a deviceAlarmPage response.
+
+    Newest first. The order the cloud returns is not reliable (#102 saw an
+    older E3 listed before a newer A3), so records are sorted by createTime,
+    and records belonging to another device are dropped. Returns None when
+    the response has no usable record list, so callers can tell "history
+    unavailable" apart from "no alarms".
+    """
+    if not isinstance(data, dict) or not isinstance(data.get("records"), list):
+        return None
+    records = [
+        {key: record.get(key) for key in _ALARM_FIELDS}
+        for record in data["records"]
+        if isinstance(record, dict) and str(record.get("deviceId")) == str(device_id)
+    ]
+    return sorted(records, key=lambda r: r.get("createTime") or 0, reverse=True)
 
 
 def _verify_response_or_raise(response: aiohttp.ClientResponse) -> None:
@@ -308,3 +342,16 @@ class FairlandApiClient:
                 "dpIdValues": [{"type": "", "dpId": dp_id, "value": value}],
             },
         )
+
+    async def get_device_alarms(self, device_id: str) -> list[dict] | None:
+        """Get the newest alarm history records of a device (see #102)."""
+        data = await self._api_wrapper(
+            method="post",
+            url=f"{self.base_url}/fyld-device-api/deviceAlarmApi/deviceAlarmPage",
+            payload={
+                "deviceId": device_id,
+                "pageNum": 1,
+                "pageSize": ALARM_HISTORY_SIZE,
+            },
+        )
+        return _alarms_from_page_response(data, device_id)

@@ -34,6 +34,7 @@ This integration enables monitoring and control of Fairland pool equipment in Ho
 * Control settings directly from Home Assistant
 * Support for multiple Fairland device types — heat pumps, pool pumps, salt chlorinators, multiport valves and swim jets
 * Direct cloud API connection to Fairland (not using Tuya)
+* Alarms for every device: an **Alarm** problem sensor that is on while the device reports an active alarm, and a **Latest Alarm** sensor with the code of the most recent alarm from the cloud alarm history (e.g. `E3`), its description, cause and remedy, and the last few alarms as attributes. Alarms that clear within one poll interval only show up in Latest Alarm
 
 ## Installation
 

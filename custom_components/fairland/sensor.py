@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 from homeassistant.components.sensor import (
@@ -923,7 +924,117 @@ async def async_setup_entry(
                 )
             )
 
+    # Alarm history sensor for every device whose history the coordinator
+    # fetched (#102). The key is present (None) even if the fetch failed.
+    entities.extend(
+        FairlandLatestAlarmSensor(
+            coordinator=entry.runtime_data.coordinator,
+            device_info=device_info,
+        )
+        for device_info in devices
+        if "alarms" in device_info
+    )
+
     async_add_entities(entities, True)
+
+
+def _alarm_text(value: Any) -> str | None:
+    """Pick the English text out of an alarm record's language dict."""
+    if not isinstance(value, dict):
+        return value if isinstance(value, str) and value else None
+    if value.get("en-US"):
+        return value["en-US"]
+    return next((text for text in value.values() if text), None)
+
+
+def _alarm_time(epoch_ms: Any) -> str | None:
+    """Convert an alarm record's epoch-milliseconds timestamp to ISO 8601."""
+    try:
+        return datetime.fromtimestamp(int(epoch_ms) / 1000, tz=UTC).isoformat()
+    except (TypeError, ValueError, OverflowError, OSError):
+        return None
+
+
+def _alarm_summary(record: dict[str, Any]) -> dict[str, Any]:
+    """Condense an alarm record to the fields shown in HA."""
+    clear_status = record.get("clearStatus")
+    return {
+        "code": record.get("code") or record.get("showInfo"),
+        # Heat pumps leave the name empty and put the meaning into reason
+        # (E3 = "No water protection"); chlorinators fill both (#102).
+        "description": _alarm_text(record.get("name"))
+        or _alarm_text(record.get("reason")),
+        "created": _alarm_time(record.get("createTime")),
+        "cleared": None if clear_status is None else clear_status == 1,
+        "cleared_at": _alarm_time(record.get("clearTime")),
+    }
+
+
+class FairlandLatestAlarmSensor(FairlandEntity, SensorEntity):
+    """Most recent entry of a device's cloud alarm history (#102).
+
+    State is the alarm code (e.g. ``E3``). The newest alarm may already be
+    cleared, so whether an alarm is active right now is the Alarm binary
+    sensor's job; this sensor tells *which* alarm happened last, including
+    alarms shorter than the poll interval.
+    """
+
+    _attr_has_entity_name = True
+    _attr_name = "Latest Alarm"
+    _attr_icon = "mdi:alert-circle-outline"
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+
+    def __init__(
+        self,
+        coordinator: FairlandDataUpdateCoordinator,
+        device_info: dict[str, Any],
+    ) -> None:
+        """Initialize the sensor."""
+        super().__init__(coordinator)
+
+        self._device_id = device_info["id"]
+        self._attr_unique_id = f"{DOMAIN}_{self._device_id}_latest_alarm"
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, self._device_id)},
+            name=device_info["deviceName"],
+            manufacturer="Fairland",
+            model=device_info.get("deviceName", "Unknown"),
+            sw_version=device_info.get("version", "Unknown"),
+        )
+
+    def _alarms(self) -> list[dict[str, Any]] | None:
+        for device in self.coordinator.data:
+            if device.get("id") == self._device_id:
+                return device.get("alarms")
+        return None
+
+    @property
+    def available(self) -> bool:
+        """Unavailable while the alarm history can't be fetched."""
+        return self.coordinator.last_update_success and self._alarms() is not None
+
+    @property
+    def native_value(self) -> str | None:
+        """Return the code of the newest alarm (None if there never was one)."""
+        alarms = self._alarms()
+        if not alarms:
+            return None
+        return _alarm_summary(alarms[0])["code"]
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return details of the newest alarm plus the recent history."""
+        alarms = self._alarms()
+        if not alarms:
+            return {}
+        latest = alarms[0]
+        return {
+            **_alarm_summary(latest),
+            "level": latest.get("level"),
+            "reason": _alarm_text(latest.get("reason")),
+            "solution": _alarm_text(latest.get("solution")),
+            "history": [_alarm_summary(record) for record in alarms],
+        }
 
 
 class FairlandSensor(FairlandEntity, SensorEntity):
