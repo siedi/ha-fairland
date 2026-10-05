@@ -34,7 +34,7 @@ This integration enables monitoring and control of Fairland pool equipment in Ho
 * Control settings directly from Home Assistant
 * Support for multiple Fairland device types — heat pumps, pool pumps, salt chlorinators, multiport valves and swim jets
 * Direct cloud API connection to Fairland (not using Tuya)
-* Alarms for every device: an **Alarm** problem sensor that is on while the device reports an active alarm, and a **Latest Alarm** sensor with the code of the most recent alarm from the cloud alarm history (e.g. `E3`), its description, cause and remedy, and the last few alarms as attributes. Alarms that clear within one poll interval only show up in Latest Alarm
+* Alarms for every device: an **Alarm** problem sensor that is on while the device reports an active alarm, an **Alarm** event that fires once for every new alarm (use it for notifications, see [Alarm notifications](#alarm-notifications)), and a **Latest Alarm** sensor with the code of the most recent alarm from the cloud alarm history (e.g. `E3`), its description, cause and remedy, and the last few alarms as attributes. Many alarms clear within seconds, so they are missed by the Alarm problem sensor but still show up in the event and in Latest Alarm
 
 ## Installation
 
@@ -126,6 +126,30 @@ The integration creates a range of entities depending on the type of device disc
 * **Timer Settings** (number) — session runtime in 15-minute steps, matching the hardware timer button
 * **Charging** (binary sensor)
 * Sensors: battery level, actual speed, model, and diagnostic battery/driver telemetry (cell temperature, battery voltage/current, cycle count, driver temperature, bus voltage/current, boot counters)
+
+## Alarm notifications
+
+The integration does not send notifications itself; you decide where alarms should go. Every device has an **Alarm** event entity (`event.<device>_alarm`) that fires once per new alarm from the cloud alarm history, even when the same code repeats. Its attributes carry `code`, `description`, `reason`, `solution`, `level`, `created`, `cleared` and `cleared_at`. Alarms that were already in the history when Home Assistant started are not replayed.
+
+Example automation that sends a push notification to the Home Assistant companion app:
+
+```yaml
+automation:
+  - alias: "Fairland alarm notification"
+    triggers:
+      - trigger: state
+        entity_id: event.inverter_heat_pump_alarm  # your device's Alarm event
+        not_from: unavailable
+    actions:
+      - action: notify.mobile_app_your_phone
+        data:
+          title: "Fairland alarm {{ trigger.to_state.attributes.code }}"
+          message: >-
+            {{ trigger.to_state.attributes.description }}.
+            {{ trigger.to_state.attributes.solution }}
+```
+
+Heat pumps can raise the same alarm many times in a row (e.g. `E3` "No water protection" every few seconds while the filter pump is off), so consider adding a `delay` or a condition on `code` if that gets noisy.
 
 ## Energy Monitoring
 
