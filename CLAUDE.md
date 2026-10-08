@@ -23,7 +23,7 @@ pip install -r requirements-test.txt && pytest tests/
 scripts/develop
 ```
 
-`scripts/lint` needs `ruff` on PATH; if it is missing, `uvx ruff format custom_components/ && uvx ruff check --fix custom_components/` works without setup. Note CI lints the whole repo (`ruff check .`), so `tests/` must lint clean too.
+`scripts/lint` needs `ruff` on PATH; if it is missing, run `uvx ruff@<version> format . && uvx ruff@<version> check --fix .` with the version pinned in `requirements.txt`. An unpinned `uvx ruff` pulls a newer release whose extra rules auto-fix unrelated files. Note CI lints the whole repo (`ruff check .`), so `tests/` must lint clean too.
 
 The `scripts/develop` command creates a `config/` directory and starts Home Assistant with debug logging enabled. The custom component is added to PYTHONPATH automatically.
 
