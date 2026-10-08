@@ -34,7 +34,7 @@ This integration enables monitoring and control of Fairland pool equipment in Ho
 * Control settings directly from Home Assistant
 * Support for multiple Fairland device types — heat pumps, pool pumps, salt chlorinators, multiport valves and swim jets
 * Direct cloud API connection to Fairland (not using Tuya)
-* Alarms for every device: an **Alarm** problem sensor that is on while the device reports an active alarm, an **Alarm** event that fires once for every new alarm (use it for notifications, see [Alarm notifications](#alarm-notifications)), and a **Latest Alarm** sensor with the code of the most recent alarm from the cloud alarm history (e.g. `E3`), its description, cause and remedy, and the last few alarms as attributes. Many alarms clear within seconds, so they are missed by the Alarm problem sensor but still show up in the event and in Latest Alarm
+* Alarms for every device: an **Alarm** problem sensor that is on while the device reports an active alarm, an **Alarm** event that fires once for every new alarm (use it for notifications, see [Alarm notifications](#alarm-notifications)), and a **Latest Alarm** sensor with the code of the most recent alarm from the cloud alarm history (e.g. `E3`), its description, cause and remedy, and the last few alarms as attributes (see [Alarm dashboard card](#alarm-dashboard-card)). Many alarms clear within seconds, so they are missed by the Alarm problem sensor but still show up in the event and in Latest Alarm
 
 ## Installation
 
@@ -150,6 +150,34 @@ automation:
 ```
 
 Heat pumps can raise the same alarm many times in a row (e.g. `E3` "No water protection" every few seconds while the filter pump is off), so consider adding a `delay` or a condition on `code` if that gets noisy.
+
+## Alarm dashboard card
+
+Latest Alarm keeps its state when the same code repeats, so the time shown in its popup is when the code last *changed*, not when the alarm happened. The real times are in its `created` and `cleared_at` attributes. Example entities card:
+
+```yaml
+type: entities
+title: Pool alarms
+entities:
+  - entity: binary_sensor.inverter_heat_pump_alarm  # your device's Alarm sensor
+    name: Current alarm
+  - entity: sensor.inverter_heat_pump_latest_alarm
+    name: Last recorded alarm
+  - type: attribute
+    entity: sensor.inverter_heat_pump_latest_alarm
+    attribute: description
+    name: Description
+  - type: attribute
+    entity: sensor.inverter_heat_pump_latest_alarm
+    attribute: created
+    name: Occurred
+    time_format: datetime
+  - type: attribute
+    entity: sensor.inverter_heat_pump_latest_alarm
+    attribute: cleared_at
+    name: Cleared
+    time_format: datetime
+```
 
 ## Energy Monitoring
 
