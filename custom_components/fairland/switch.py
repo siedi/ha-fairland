@@ -19,6 +19,7 @@ from .const import (
     WATER_PUMP_CATEGORY_CODE,
 )
 from .entity import FairlandEntity
+from .vsp import FairlandVspEntity, has_vsp
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -148,6 +149,17 @@ async def async_setup_entry(
         ):
             entities.append(
                 FairlandSwimJetPauseSwitch(
+                    coordinator=entry.runtime_data.coordinator,
+                    device_info=device_info,
+                )
+            )
+
+        # Salt chlorinator: VSP toggle, byte 0 of the packed dp 146 (#107).
+        if device_info.get("categoryCode") == SALT_MACHINE_CATEGORY_CODE and has_vsp(
+            device_info
+        ):
+            entities.append(
+                FairlandVspSwitch(
                     coordinator=entry.runtime_data.coordinator,
                     device_info=device_info,
                 )
@@ -385,3 +397,33 @@ class FairlandSwimJetPauseSwitch(FairlandEntity, SwitchEntity):
                 self._device_info = device
                 self.async_write_ha_state()
                 break
+
+
+class FairlandVspSwitch(FairlandVspEntity, SwitchEntity):
+    """VSP pump control on/off for salt chlorinators (dp 146 byte 0, #107)."""
+
+    _attr_icon = "mdi:pump"
+
+    def __init__(
+        self,
+        coordinator: FairlandDataUpdateCoordinator,
+        device_info: dict[str, Any],
+    ) -> None:
+        """Initialize the VSP switch."""
+        super().__init__(coordinator, device_info)
+        self._attr_name = "VSP Control"
+        self._attr_unique_id = f"{DOMAIN}_{self._device_id}_switch_vsp"
+
+    @property
+    def is_on(self) -> bool:
+        """Return true if VSP control is enabled."""
+        vsp = self._vsp()
+        return vsp is not None and vsp[0] != 0
+
+    async def async_turn_on(self, **kwargs) -> None:
+        """Enable VSP control, keeping the selected speed."""
+        await self._async_write_vsp(toggle=1)
+
+    async def async_turn_off(self, **kwargs) -> None:
+        """Disable VSP control, keeping the selected speed."""
+        await self._async_write_vsp(toggle=0)

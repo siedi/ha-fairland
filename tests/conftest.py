@@ -196,7 +196,7 @@ def _load_integration() -> dict[str, types.ModuleType]:
         return module
 
     # Dependency order: leaves first.
-    for name in ("const", "api", "data", "coordinator", "entity", "alarms"):
+    for name in ("const", "api", "data", "coordinator", "entity", "alarms", "vsp"):
         load(name)
     return {
         name: load(name)
@@ -245,6 +245,7 @@ class _FakeCoordinator:
     def __init__(self, devices, client) -> None:
         self.data = devices
         self.last_update_success = True
+        self.shared_pending_writes: dict = {}
         self.config_entry = _FakeConfigEntry()
         self.config_entry.runtime_data = _FakeRuntime(self, client)
 

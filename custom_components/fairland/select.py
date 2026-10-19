@@ -34,6 +34,7 @@ from .const import (
     WATER_PUMP_CATEGORY_CODE,
 )
 from .entity import FairlandEntity
+from .vsp import VSP_SPEED_OPTIONS, FairlandVspEntity, has_vsp
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -327,6 +328,14 @@ async def async_setup_entry(
                         config=config,
                     )
                 )
+            # Salt chlorinator: VSP speed, byte 1 of the packed dp 146 (#107).
+            if category == SALT_MACHINE_CATEGORY_CODE and has_vsp(device_info):
+                entities.append(
+                    FairlandVspSpeedSelect(
+                        coordinator=entry.runtime_data.coordinator,
+                        device_info=device_info,
+                    )
+                )
     async_add_entities(entities, True)
 
 
@@ -558,3 +567,34 @@ class FairlandDpSelect(FairlandEntity, SelectEntity):
     async def async_update(self) -> None:
         """Update the entity."""
         await self.coordinator.async_request_refresh()
+
+
+class FairlandVspSpeedSelect(FairlandVspEntity, SelectEntity):
+    """VSP pump speed for salt chlorinators (dp 146 byte 1, #107)."""
+
+    _attr_icon = "mdi:speedometer"
+    _attr_translation_key = "salt_vsp_speed"
+    _attr_options = list(VSP_SPEED_OPTIONS.values())
+
+    def __init__(
+        self,
+        coordinator: FairlandDataUpdateCoordinator,
+        device_info: dict[str, Any],
+    ) -> None:
+        """Initialize the VSP speed select."""
+        super().__init__(coordinator, device_info)
+        self._attr_unique_id = f"{DOMAIN}_{self._device_id}_select_vsp_speed"
+
+    @property
+    def current_option(self) -> str | None:
+        """Return the selected VSP speed."""
+        vsp = self._vsp()
+        return None if vsp is None else VSP_SPEED_OPTIONS.get(vsp[1])
+
+    async def async_select_option(self, option: str) -> None:
+        """Write a new VSP speed, keeping the toggle."""
+        speed = next((i for i, o in VSP_SPEED_OPTIONS.items() if o == option), None)
+        if speed is None:
+            LOGGER.error("Refusing to set unknown VSP speed option: %r", option)
+            return
+        await self._async_write_vsp(speed=speed)

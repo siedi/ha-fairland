@@ -68,12 +68,35 @@ class FairlandEntity(CoordinatorEntity[FairlandDataUpdateCoordinator]):
         few seconds; keep showing the written value until the cloud confirms
         it or the grace period runs out.
         """
-        pending = self._pending_writes.get(str(dp_id))
+        return self._resolve_pending(self._pending_writes, str(dp_id), polled_value)
+
+    def _note_shared_pending_write(
+        self, device_id: str, dp_id: str, value: Any
+    ) -> None:
+        """Record an optimistic write that sibling entities must see too."""
+        self.coordinator.shared_pending_writes[(str(device_id), str(dp_id))] = (
+            value,
+            time.monotonic() + PENDING_WRITE_TIMEOUT,
+        )
+
+    def _effective_shared_dp_value(
+        self, device_id: str, dp_id: str, polled_value: Any
+    ) -> Any:
+        """Like _effective_dp_value, for a dp several entities write."""
+        return self._resolve_pending(
+            self.coordinator.shared_pending_writes,
+            (str(device_id), str(dp_id)),
+            polled_value,
+        )
+
+    def _resolve_pending(self, store: dict, key: Any, polled_value: Any) -> Any:
+        """Return the pending value for key, dropping it once confirmed or expired."""
+        pending = store.get(key)
         if pending is None:
             return polled_value
         value, expires = pending
         if self._dp_values_match(polled_value, value) or time.monotonic() >= expires:
-            del self._pending_writes[str(dp_id)]
+            del store[key]
             return polled_value
         return value
 
