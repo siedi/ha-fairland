@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import timedelta
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
@@ -30,6 +30,10 @@ class FairlandDataUpdateCoordinator(DataUpdateCoordinator):
     ) -> None:
         """Initialize the coordinator."""
         self.device_ids = {}
+        # (deviceId, dpId) -> (written raw value, monotonic expiry). Pending
+        # writes for dps that several entities share (salt VSP dp 146, #107),
+        # so one entity's write is seen by the others before the cloud catches up.
+        self.shared_pending_writes: dict[tuple[str, str], tuple[Any, float]] = {}
         scan_interval = config_entry.data.get("scan_interval", 30)
         super().__init__(
             hass,

@@ -74,7 +74,8 @@ def test_sensor_enum_maps_to_label(setup_entities, salt_devices):
 def test_switches_created_and_backwash_gated(setup_entities, salt_devices):
     entities, _ = setup_entities("switch", salt_devices)
     # dp 153 (backwash) is null on this firmware → skipped by require_value.
-    assert set(_by_dp(entities)) == {"103", "107", "121", "123"}
+    # dp 146 is the VSP toggle (#107), see test_salt_vsp.py.
+    assert set(_by_dp(entities)) == {"103", "107", "121", "123", "146"}
 
 
 def test_power_switch_keeps_legacy_unique_id(setup_entities, salt_devices):
@@ -97,7 +98,7 @@ def test_switch_write_records_call(setup_entities, salt_devices):
 def test_selects_created(setup_entities, salt_devices):
     entities, _ = setup_entities("select", salt_devices)
     dps = _by_dp(entities)
-    assert set(dps) == {"132", "122"}
+    assert set(dps) == {"132", "122", "146"}
     # dp 132 reports 0 → "inverter"; full option set parsed from dpProperty.
     assert dps["132"]._attr_current_option == "inverter"
     assert dps["132"]._attr_options == ["inverter", "auto_ph", "manual"]

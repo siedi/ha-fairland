@@ -103,6 +103,7 @@ The integration creates a range of entities depending on the type of device disc
 
 * **Power switch**, plus switches for Turbo boost, Timer, real-time salinity monitoring and Backwash (where the firmware supports it)
 * **Mode** and **Polarity Reversal Interval** (selects) — options are read from what your device reports
+* **VSP Control** (switch) and **VSP Speed** (select: OFF, SP1, SP2, SP3) — the app's External control button for a variable-speed pump wired to the chlorinator, on firmwares that report it
 * Setpoints (number): pH, ORP, target chlorine output, pool volume and acid dosing rate; ranges follow what your device reports
 * Sensors: salt concentration, pH, ORP, pool water temperature (°C and °F), controller temperature, chlorine output, power, voltage, current, runtime, water quality and active profile
 * Diagnostic binary sensors: water flow fault, acid dosing, salt low, replace probe, calibration required and pool cover closed

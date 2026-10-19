@@ -74,6 +74,15 @@
           "6_hours": "Every 6 hours"
         }
       },
+      "salt_vsp_speed": {
+        "name": "VSP Speed",
+        "state": {
+          "off": "OFF",
+          "sp1": "SP1",
+          "sp2": "SP2",
+          "sp3": "SP3"
+        }
+      },
       "sand_cylinder_mode": {
         "name": "Mode",
         "state": {
