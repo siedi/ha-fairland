@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from .data import FairlandConfigEntry
 
 
-from .const import DOMAIN, LOGGER
+from .const import DEFAULT_SCAN_INTERVAL, DOMAIN, LOGGER
 
 
 class FairlandDataUpdateCoordinator(DataUpdateCoordinator):
@@ -34,7 +34,10 @@ class FairlandDataUpdateCoordinator(DataUpdateCoordinator):
         # writes for dps that several entities share (salt VSP dp 146, #107),
         # so one entity's write is seen by the others before the cloud catches up.
         self.shared_pending_writes: dict[tuple[str, str], tuple[Any, float]] = {}
-        scan_interval = config_entry.data.get("scan_interval", 30)
+        scan_interval = config_entry.options.get(
+            "scan_interval",
+            config_entry.data.get("scan_interval", DEFAULT_SCAN_INTERVAL),
+        )
         super().__init__(
             hass,
             logger=LOGGER,

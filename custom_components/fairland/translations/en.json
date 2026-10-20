@@ -4,15 +4,13 @@
       "user": {
         "data": {
           "accountName": "Account E-Mail",
-          "password": "Password",
-          "scan_interval": "Scan Interval (seconds)"
+          "password": "Password"
         },
         "description": "Enter your Fairland iGarden app credentials. This integration supports Fairland pool heat pumps and pool pumps (including OEM-rebadged variants such as Madimack) and only works with the **iGarden app**, not the SmartPool app. Your account's server region (EU/US/HK/CN) is detected automatically.",
         "title": "Fairland (iGarden) Account Setup",
         "data_description": {
           "accountName": "The e-mail address of your iGarden app account.",
-          "password": "The password of your iGarden app account.",
-          "scan_interval": "How often the integration polls the cloud for new values, in seconds."
+          "password": "The password of your iGarden app account."
         }
       },
       "courtyard": {
@@ -23,16 +21,6 @@
         "title": "Select Courtyard",
         "data_description": {
           "courtyard": "The courtyard (device group) from your iGarden app whose devices should be added."
-        }
-      },
-      "reconfigure": {
-        "data": {
-          "scan_interval": "Scan Interval (seconds)"
-        },
-        "description": "Update the scan interval for {device_name}",
-        "title": "Reconfigure Fairland",
-        "data_description": {
-          "scan_interval": "How often the integration polls the cloud for new values, in seconds."
         }
       },
       "reauth_confirm": {
@@ -56,8 +44,21 @@
     "abort": {
       "already_configured": "This courtyard is already configured",
       "no_courtyards": "No courtyards found for this account",
-      "reconfigure_successful": "Reconfiguration successful",
       "reauth_successful": "Re-authentication successful"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Fairland Options",
+        "description": "Change how often the integration polls the iGarden cloud. The integration reloads when you save.",
+        "data": {
+          "scan_interval": "Scan Interval (seconds)"
+        },
+        "data_description": {
+          "scan_interval": "How often the integration polls the cloud for new values, in seconds."
+        }
+      }
     }
   },
   "entity": {
