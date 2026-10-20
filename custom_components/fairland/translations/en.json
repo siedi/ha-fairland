@@ -8,22 +8,42 @@
           "scan_interval": "Scan Interval (seconds)"
         },
         "description": "Enter your Fairland iGarden app credentials. This integration supports Fairland pool heat pumps and pool pumps (including OEM-rebadged variants such as Madimack) and only works with the **iGarden app**, not the SmartPool app. Your account's server region (EU/US/HK/CN) is detected automatically.",
-        "title": "Fairland (iGarden) Account Setup"
+        "title": "Fairland (iGarden) Account Setup",
+        "data_description": {
+          "accountName": "The e-mail address of your iGarden app account.",
+          "password": "The password of your iGarden app account.",
+          "scan_interval": "How often the integration polls the cloud for new values, in seconds."
+        }
       },
       "courtyard": {
         "data": {
-          "courtyard_id": "Select Courtyard",
-          "courtyard": "Courtyards"
+          "courtyard": "Courtyard"
         },
         "description": "Select the courtyard you want to add for {username}",
-        "title": "Select Courtyard"
+        "title": "Select Courtyard",
+        "data_description": {
+          "courtyard": "The courtyard (device group) from your iGarden app whose devices should be added."
+        }
       },
       "reconfigure": {
         "data": {
           "scan_interval": "Scan Interval (seconds)"
         },
         "description": "Update the scan interval for {device_name}",
-        "title": "Reconfigure Fairland"
+        "title": "Reconfigure Fairland",
+        "data_description": {
+          "scan_interval": "How often the integration polls the cloud for new values, in seconds."
+        }
+      },
+      "reauth_confirm": {
+        "title": "Re-authenticate Fairland",
+        "description": "The iGarden cloud rejected the stored credentials for {username}. Enter the current password to continue.",
+        "data": {
+          "password": "Password"
+        },
+        "data_description": {
+          "password": "The current password of your iGarden app account."
+        }
       }
     },
     "error": {
@@ -36,7 +56,8 @@
     "abort": {
       "already_configured": "Account is already configured",
       "no_courtyards": "No courtyards found for this account",
-      "reconfigure_successful": "Reconfiguration successful"
+      "reconfigure_successful": "Reconfiguration successful",
+      "reauth_successful": "Re-authentication successful"
     }
   },
   "entity": {
