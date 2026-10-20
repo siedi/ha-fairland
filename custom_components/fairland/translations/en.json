@@ -54,7 +54,7 @@
       "unknown": "Unexpected error"
     },
     "abort": {
-      "already_configured": "Account is already configured",
+      "already_configured": "This courtyard is already configured",
       "no_courtyards": "No courtyards found for this account",
       "reconfigure_successful": "Reconfiguration successful",
       "reauth_successful": "Re-authentication successful"

@@ -47,6 +47,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Fairland."""
 
     VERSION = 1
+    MINOR_VERSION = 2
 
     def __init__(self) -> None:
         """Initialize the config flow."""
@@ -120,6 +121,11 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             selected_courtyard = next(
                 c for c in self.courtyards if c["id"] == selected_courtyard_id
             )
+
+            # The courtyard id is server-assigned and stable; one entry per
+            # courtyard (the e-mail is user-changeable, so not used here).
+            await self.async_set_unique_id(str(selected_courtyard_id))
+            self._abort_if_unique_id_configured()
 
             # Store the selected courtyard
             self.selected_courtyard = selected_courtyard
@@ -222,9 +228,6 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         # Get the entry using the standard method
         entry = self._get_reconfigure_entry()
-
-        # Abort if the unique ID doesn't match
-        self._abort_if_unique_id_configured()
 
         if user_input is not None:
             # Update scan interval

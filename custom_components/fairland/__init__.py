@@ -19,7 +19,7 @@ from .api import (
     FairlandApiClientAuthenticationError,
     FairlandApiClientError,
 )
-from .const import CONF_API_REGION, DEFAULT_API_REGION, LOGGER
+from .const import CONF_API_REGION, DEFAULT_API_REGION, DOMAIN, LOGGER
 from .coordinator import FairlandDataUpdateCoordinator
 from .data import FairlandData
 
@@ -108,3 +108,47 @@ async def async_unload_entry(
 ) -> bool:
     """Handle removal of an entry."""
     return await hass.config_entries.async_unload_platforms(config_entry, PLATFORMS)
+
+
+async def async_migrate_entry(
+    hass: HomeAssistant, config_entry: FairlandConfigEntry
+) -> bool:
+    """Migrate old entries: 1.1 -> 1.2 adds the courtyard id as unique ID."""
+    if config_entry.version > 1:
+        # Created by a newer version of the integration, can't downgrade.
+        return False
+
+    if config_entry.version == 1 and config_entry.minor_version < 2:
+        unique_id = config_entry.unique_id
+        if unique_id is None:
+            unique_id = str(config_entry.data["courtyard_id"])
+            duplicate = next(
+                (
+                    other
+                    for other in hass.config_entries.async_entries(DOMAIN)
+                    if other.entry_id != config_entry.entry_id
+                    and other.unique_id == unique_id
+                ),
+                None,
+            )
+            if duplicate is not None:
+                LOGGER.warning(
+                    "Config entry '%s' is a duplicate courtyard of '%s', "
+                    "remove one of the entries",
+                    config_entry.title,
+                    duplicate.title,
+                )
+                unique_id = None
+        if unique_id is None:
+            hass.config_entries.async_update_entry(config_entry, minor_version=2)
+        else:
+            hass.config_entries.async_update_entry(
+                config_entry, unique_id=unique_id, minor_version=2
+            )
+        LOGGER.debug(
+            "Migrated config entry '%s' to 1.2 (unique_id=%s)",
+            config_entry.title,
+            unique_id,
+        )
+
+    return True
