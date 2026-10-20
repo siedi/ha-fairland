@@ -109,10 +109,22 @@ def test_legacy_entry_unreachable_region_is_not_ready(monkeypatch):
 
 
 class _MigEntry:
-    def __init__(self, entry_id, courtyard_id, unique_id=None, version=1, minor=1):
+    def __init__(
+        self,
+        entry_id,
+        courtyard_id,
+        unique_id=None,
+        version=1,
+        minor=1,
+        scan_interval=None,
+        options=None,
+    ):
         self.entry_id = entry_id
         self.title = f"Entry {entry_id}"
         self.data = {"courtyard_id": courtyard_id}
+        if scan_interval is not None:
+            self.data["scan_interval"] = scan_interval
+        self.options = options or {}
         self.unique_id = unique_id
         self.version = version
         self.minor_version = minor
@@ -128,6 +140,9 @@ class _MigEntries:
 
     def async_update_entry(self, entry, **kwargs):
         self.calls.append((entry, kwargs))
+        # Like HA: apply the update to the entry.
+        for key, value in kwargs.items():
+            setattr(entry, key, value)
 
 
 def _migrate(entry, others=()):
@@ -137,19 +152,64 @@ def _migrate(entry, others=()):
     return result, hass.config_entries.calls
 
 
-def test_migrate_sets_unique_id_from_courtyard():
+def test_migrate_1_1_ends_at_1_3_in_one_call():
+    entry = _MigEntry("a", 12345, scan_interval=45)
+    result, calls = _migrate(entry)
+    assert result is True
+    assert [kw for _, kw in calls] == [
+        {"unique_id": "12345", "minor_version": 2},
+        {
+            "data": {"courtyard_id": 12345},
+            "options": {"scan_interval": 45},
+            "minor_version": 3,
+        },
+    ]
+    assert entry.minor_version == 3
+    assert entry.unique_id == "12345"
+    assert "scan_interval" not in entry.data
+
+
+def test_migrate_1_1_without_scan_interval_only_bumps_minor_version():
     entry = _MigEntry("a", 12345)
     result, calls = _migrate(entry)
     assert result is True
-    assert calls == [(entry, {"unique_id": "12345", "minor_version": 2})]
+    assert calls[-1][1] == {"minor_version": 3}
+    assert entry.options == {}
 
 
-def test_migrate_duplicate_courtyard_only_bumps_minor_version():
-    entry = _MigEntry("b", 12345)
-    other = _MigEntry("a", 12345, unique_id="12345", minor=2)
+def test_migrate_duplicate_courtyard_still_reaches_1_3():
+    entry = _MigEntry("b", 12345, scan_interval=60)
+    other = _MigEntry("a", 12345, unique_id="12345", minor=3)
     result, calls = _migrate(entry, [other])
     assert result is True
-    assert calls == [(entry, {"minor_version": 2})]
+    assert entry.unique_id is None
+    assert entry.minor_version == 3
+    assert entry.options == {"scan_interval": 60}
+
+
+def test_migrate_1_2_moves_scan_interval_to_options():
+    entry = _MigEntry(
+        "a", 12345, unique_id="12345", minor=2, scan_interval=45, options={"x": 1}
+    )
+    result, calls = _migrate(entry)
+    assert result is True
+    assert calls == [
+        (
+            entry,
+            {
+                "data": {"courtyard_id": 12345},
+                "options": {"x": 1, "scan_interval": 45},
+                "minor_version": 3,
+            },
+        )
+    ]
+
+
+def test_migrate_1_2_without_scan_interval_only_bumps_minor_version():
+    entry = _MigEntry("a", 12345, unique_id="12345", minor=2)
+    result, calls = _migrate(entry)
+    assert result is True
+    assert calls == [(entry, {"minor_version": 3})]
 
 
 def test_migrate_future_major_version_is_refused():
@@ -160,7 +220,7 @@ def test_migrate_future_major_version_is_refused():
 
 
 def test_migrate_current_minor_version_is_untouched():
-    entry = _MigEntry("a", 12345, unique_id="12345", minor=2)
+    entry = _MigEntry("a", 12345, unique_id="12345", minor=3)
     result, calls = _migrate(entry)
     assert result is True
     assert calls == []
@@ -170,4 +230,5 @@ def test_migrate_keeps_existing_unique_id():
     entry = _MigEntry("a", 12345, unique_id="custom")
     result, calls = _migrate(entry)
     assert result is True
-    assert calls == [(entry, {"unique_id": "custom", "minor_version": 2})]
+    assert calls[0] == (entry, {"unique_id": "custom", "minor_version": 2})
+    assert entry.minor_version == 3

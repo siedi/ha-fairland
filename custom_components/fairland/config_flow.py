@@ -8,7 +8,7 @@ from typing import Any
 import voluptuous as vol
 
 from homeassistant import config_entries
-from homeassistant.exceptions import HomeAssistantError
+from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
 import homeassistant.helpers.config_validation as cv
 
@@ -30,24 +30,25 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
     {
         vol.Required("accountName"): cv.string,
         vol.Required("password"): cv.string,
-        vol.Required("scan_interval", default=DEFAULT_SCAN_INTERVAL): cv.positive_int,
     }
 )
 
 STEP_REAUTH_SCHEMA = vol.Schema({vol.Required("password"): cv.string})
-
-STEP_RECONFIGURE_SCHEMA = vol.Schema(
-    {
-        vol.Required("scan_interval", default=DEFAULT_SCAN_INTERVAL): cv.positive_int,
-    }
-)
 
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Fairland."""
 
     VERSION = 1
-    MINOR_VERSION = 2
+    MINOR_VERSION = 3
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(
+        config_entry: config_entries.ConfigEntry,
+    ) -> FairlandOptionsFlow:
+        """Return the options flow (scan interval)."""
+        return FairlandOptionsFlow()
 
     def __init__(self) -> None:
         """Initialize the config flow."""
@@ -55,7 +56,6 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self.username = None
         self.password = None
         self.api_region = None
-        self.scan_interval = None
         self.courtyards = None
         self.selected_courtyard = None
         self.devices = None
@@ -70,7 +70,6 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             self.username = user_input["accountName"]
             self.password = user_input["password"]
-            self.scan_interval = user_input["scan_interval"]
 
             try:
                 self.apiClient = FairlandApiClient(
@@ -149,7 +148,6 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         "username": self.username,
                         "password": self.password,
                         CONF_API_REGION: self.api_region,
-                        "scan_interval": self.scan_interval,
                         "courtyard_id": selected_courtyard_id,
                         "courtyard_name": selected_courtyard["name"],
                         "devices": self.devices,
@@ -220,54 +218,24 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             description_placeholders={"username": entry.data["username"]},
         )
 
-    async def async_step_reconfigure(
-        self, user_input: dict | None = None
+
+class FairlandOptionsFlow(config_entries.OptionsFlowWithReload):
+    """Options: polling interval. The entry is reloaded when they change."""
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
     ) -> config_entries.ConfigFlowResult:
-        """Handle reconfiguration by the user."""
-        _errors = {}
-
-        # Get the entry using the standard method
-        entry = self._get_reconfigure_entry()
-
+        """Manage the options."""
         if user_input is not None:
-            # Update scan interval
-            new_data = {
-                **entry.data,
-                "scan_interval": user_input["scan_interval"],
-            }
+            return self.async_create_entry(data=user_input)
 
-            # Update the config entry and reload the integration
-            return self.async_update_reload_and_abort(
-                entry, data=new_data, reason="reconfigure_successful"
-            )
-
-        # Prepare schema with current values
-        current_scan_interval = entry.data.get("scan_interval", DEFAULT_SCAN_INTERVAL)
-
-        # Show form with current values as defaults
-        schema = vol.Schema(
-            {
-                vol.Required(
-                    "scan_interval", default=current_scan_interval
-                ): cv.positive_int,
-            }
+        current = self.config_entry.options.get(
+            "scan_interval",
+            self.config_entry.data.get("scan_interval", DEFAULT_SCAN_INTERVAL),
         )
-
         return self.async_show_form(
-            step_id="reconfigure",
-            data_schema=schema,
-            errors=_errors,
-            description_placeholders={"device_name": entry.title},
+            step_id="init",
+            data_schema=vol.Schema(
+                {vol.Required("scan_interval", default=current): cv.positive_int}
+            ),
         )
-
-
-class CannotConnect(HomeAssistantError):
-    """Error to indicate we cannot connect."""
-
-
-class InvalidAuth(HomeAssistantError):
-    """Error to indicate there is invalid auth."""
-
-
-class CannotGetCourtyards(HomeAssistantError):
-    """Error to indicate we cannot get the courtyards."""

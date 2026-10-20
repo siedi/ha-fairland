@@ -96,8 +96,8 @@ async def async_setup_entry(
     await coordinator.async_config_entry_first_refresh()
 
     # Set up the platforms for this integration
-    # No update listener: the reauth and reconfigure flows reload the entry
-    # themselves via async_update_reload_and_abort.
+    # No update listener: the reauth flow reloads the entry itself and the
+    # options flow is an OptionsFlowWithReload.
     await hass.config_entries.async_forward_entry_setups(config_entry, PLATFORMS)
 
     return True
@@ -113,7 +113,11 @@ async def async_unload_entry(
 async def async_migrate_entry(
     hass: HomeAssistant, config_entry: FairlandConfigEntry
 ) -> bool:
-    """Migrate old entries: 1.1 -> 1.2 adds the courtyard id as unique ID."""
+    """Migrate old entries.
+
+    1.1 -> 1.2 adds the courtyard id as unique ID, 1.2 -> 1.3 moves the scan
+    interval from data to options.
+    """
     if config_entry.version > 1:
         # Created by a newer version of the integration, can't downgrade.
         return False
@@ -150,5 +154,19 @@ async def async_migrate_entry(
             config_entry.title,
             unique_id,
         )
+
+    if config_entry.version == 1 and config_entry.minor_version < 3:
+        data = dict(config_entry.data)
+        if "scan_interval" in data:
+            options = {
+                **config_entry.options,
+                "scan_interval": data.pop("scan_interval"),
+            }
+            hass.config_entries.async_update_entry(
+                config_entry, data=data, options=options, minor_version=3
+            )
+        else:
+            hass.config_entries.async_update_entry(config_entry, minor_version=3)
+        LOGGER.debug("Migrated config entry '%s' to 1.3", config_entry.title)
 
     return True

@@ -67,6 +67,10 @@ Add the integration through the Home Assistant UI:
 
 You will need your Fairland app account credentials to set up the integration.
 
+### Options
+
+The polling interval (scan interval, default 30 seconds) is not asked during setup. To change it, go to Settings → Devices & Services → Fairland and click **Configure**. The integration reloads when you save.
+
 ## Removal
 
 1. Go to Settings → Devices & Services → Fairland, open the three-dot menu and choose **Delete**. This removes the integration together with its devices and entities.
