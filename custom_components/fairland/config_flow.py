@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+from typing import Any
+
 import voluptuous as vol
 
 from homeassistant import config_entries
@@ -15,7 +18,13 @@ from .api import (
     FairlandApiClientCommunicationError,
     FairlandApiClientError,
 )
-from .const import CONF_API_REGION, DEFAULT_SCAN_INTERVAL, DOMAIN, LOGGER
+from .const import (
+    CONF_API_REGION,
+    DEFAULT_API_REGION,
+    DEFAULT_SCAN_INTERVAL,
+    DOMAIN,
+    LOGGER,
+)
 
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {
@@ -24,6 +33,8 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
         vol.Required("scan_interval", default=DEFAULT_SCAN_INTERVAL): cv.positive_int,
     }
 )
+
+STEP_REAUTH_SCHEMA = vol.Schema({vol.Required("password"): cv.string})
 
 STEP_RECONFIGURE_SCHEMA = vol.Schema(
     {
@@ -154,6 +165,53 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             ),
             errors=_errors,
             description_placeholders={"username": self.username},
+        )
+
+    async def async_step_reauth(
+        self, entry_data: Mapping[str, Any]
+    ) -> config_entries.ConfigFlowResult:
+        """Start reauthentication after the stored credentials were rejected."""
+        return await self.async_step_reauth_confirm()
+
+    async def async_step_reauth_confirm(
+        self, user_input: dict[str, Any] | None = None
+    ) -> config_entries.ConfigFlowResult:
+        """Ask for the new password and validate it."""
+        _errors = {}
+        entry = self._get_reauth_entry()
+
+        if user_input is not None:
+            client = FairlandApiClient(
+                username=entry.data["username"],
+                password=user_input["password"],
+                session=async_create_clientsession(self.hass),
+                region=entry.data.get(CONF_API_REGION, DEFAULT_API_REGION),
+            )
+            data_updates = {"password": user_input["password"]}
+            try:
+                if CONF_API_REGION in entry.data:
+                    await client.login()
+                else:
+                    data_updates[CONF_API_REGION] = await client.detect_region()
+            except FairlandApiClientAuthenticationError as exception:
+                LOGGER.warning(exception)
+                _errors["base"] = "invalid_auth"
+            except FairlandApiClientCommunicationError as exception:
+                LOGGER.error(exception)
+                _errors["base"] = "cannot_connect"
+            except FairlandApiClientError as exception:
+                LOGGER.exception(exception)
+                _errors["base"] = "unknown"
+            else:
+                return self.async_update_reload_and_abort(
+                    entry, data_updates=data_updates
+                )
+
+        return self.async_show_form(
+            step_id="reauth_confirm",
+            data_schema=STEP_REAUTH_SCHEMA,
+            errors=_errors,
+            description_placeholders={"username": entry.data["username"]},
         )
 
     async def async_step_reconfigure(
