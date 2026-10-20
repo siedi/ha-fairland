@@ -106,3 +106,68 @@ def test_legacy_entry_unreachable_region_is_not_ready(monkeypatch):
         detect_exc=api.FairlandApiClientCommunicationError("down"),
     )
     assert isinstance(exc, exceptions.ConfigEntryNotReady)
+
+
+class _MigEntry:
+    def __init__(self, entry_id, courtyard_id, unique_id=None, version=1, minor=1):
+        self.entry_id = entry_id
+        self.title = f"Entry {entry_id}"
+        self.data = {"courtyard_id": courtyard_id}
+        self.unique_id = unique_id
+        self.version = version
+        self.minor_version = minor
+
+
+class _MigEntries:
+    def __init__(self, entries) -> None:
+        self._entries = entries
+        self.calls = []
+
+    def async_entries(self, domain):
+        return list(self._entries)
+
+    def async_update_entry(self, entry, **kwargs):
+        self.calls.append((entry, kwargs))
+
+
+def _migrate(entry, others=()):
+    hass = _Hass()
+    hass.config_entries = _MigEntries([entry, *others])
+    result = asyncio.run(integration.async_migrate_entry(hass, entry))
+    return result, hass.config_entries.calls
+
+
+def test_migrate_sets_unique_id_from_courtyard():
+    entry = _MigEntry("a", 12345)
+    result, calls = _migrate(entry)
+    assert result is True
+    assert calls == [(entry, {"unique_id": "12345", "minor_version": 2})]
+
+
+def test_migrate_duplicate_courtyard_only_bumps_minor_version():
+    entry = _MigEntry("b", 12345)
+    other = _MigEntry("a", 12345, unique_id="12345", minor=2)
+    result, calls = _migrate(entry, [other])
+    assert result is True
+    assert calls == [(entry, {"minor_version": 2})]
+
+
+def test_migrate_future_major_version_is_refused():
+    entry = _MigEntry("a", 12345, version=2, minor=0)
+    result, calls = _migrate(entry)
+    assert result is False
+    assert calls == []
+
+
+def test_migrate_current_minor_version_is_untouched():
+    entry = _MigEntry("a", 12345, unique_id="12345", minor=2)
+    result, calls = _migrate(entry)
+    assert result is True
+    assert calls == []
+
+
+def test_migrate_keeps_existing_unique_id():
+    entry = _MigEntry("a", 12345, unique_id="custom")
+    result, calls = _migrate(entry)
+    assert result is True
+    assert calls == [(entry, {"unique_id": "custom", "minor_version": 2})]
