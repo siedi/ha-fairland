@@ -1,0 +1,40 @@
+rules:
+  # Bronze
+  action-setup:
+    status: exempt
+    comment: The integration provides no service actions.
+  appropriate-polling: done
+  brands:
+    status: done
+    comment: Bundled locally in brand/ as a custom integration.
+  common-modules: done
+  config-flow:
+    status: todo
+    comment: scan_interval moves to an options flow (#109).
+  config-flow-test-coverage:
+    status: todo
+    comment: Config flow tests are tracked in #109.
+  dependency-transparency:
+    status: done
+    comment: No external requirements.
+  docs-actions:
+    status: exempt
+    comment: The integration provides no service actions.
+  docs-conditions:
+    status: exempt
+    comment: The integration provides no conditions.
+  docs-triggers:
+    status: exempt
+    comment: The integration provides no triggers.
+  docs-high-level-description: done
+  docs-installation-instructions: done
+  docs-removal-instructions: done
+  entity-event-setup: done
+  entity-unique-id: done
+  has-entity-name: done
+  runtime-data: done
+  test-before-configure: done
+  test-before-setup: done
+  unique-config-entry:
+    status: todo
+    comment: Unique ID for the config entry is tracked in #109.
