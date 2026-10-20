@@ -67,6 +67,14 @@ Add the integration through the Home Assistant UI:
 
 You will need your Fairland app account credentials to set up the integration.
 
+## Removal
+
+1. Go to Settings → Devices & Services → Fairland, open the three-dot menu and choose **Delete**. This removes the integration together with its devices and entities.
+2. HACS installs: also remove the repository in HACS, then restart Home Assistant.
+3. Manual installs: delete the `custom_components/fairland` directory, then restart Home Assistant.
+
+Nothing needs to be changed in the iGarden app.
+
 ## Supported Entities
 
 The integration creates a range of entities depending on the type of device discovered on your iGarden account.
