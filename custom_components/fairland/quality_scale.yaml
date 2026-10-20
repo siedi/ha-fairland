@@ -9,11 +9,11 @@ rules:
     comment: Bundled locally in brand/ as a custom integration.
   common-modules: done
   config-flow:
-    status: todo
-    comment: scan_interval moves to an options flow (#109).
+    status: done
+    comment: scan_interval lives in an options flow (#109).
   config-flow-test-coverage:
-    status: todo
-    comment: Config flow tests are tracked in #109.
+    status: done
+    comment: 100% line coverage of config_flow.py via tests_ha/ (#109).
   dependency-transparency:
     status: done
     comment: No external requirements.

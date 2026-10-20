@@ -1,0 +1,7 @@
+# Real-Home-Assistant config flow tests under tests_ha/ (kept apart from the
+# stub-based tests/ suite, whose conftest replaces homeassistant.* in
+# sys.modules). 0.13.299 pins homeassistant==2025.12.1 (matches
+# requirements.txt) and needs Python >= 3.13.
+pytest-homeassistant-custom-component==0.13.299
+# aiodns 3.5.0 breaks with pycares >= 5 (see requirements.txt)
+pycares<5
