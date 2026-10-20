@@ -19,6 +19,10 @@ scripts/lint
 pip install -r requirements-test.txt && pytest tests/
 # or, without setup: uvx --python 3.13 pytest tests/
 
+# Config flow tests against a real Home Assistant (pytest-homeassistant-custom-component,
+# Python 3.13); separate from tests/ because that conftest stubs homeassistant.*
+pip install -r requirements-test-ha.txt && pytest tests_ha/
+
 # Run local Home Assistant instance for testing
 scripts/develop
 ```
@@ -75,7 +79,7 @@ Device alarms (all categories, #102): alarms are NOT in the dps. Every device in
 
 ### Config Flow
 
-User provides iGarden app credentials. Integration fetches available courtyards, user selects one, and all devices in that courtyard become available. Note: the flow stores a device-list snapshot in `entry.data["devices"]` that nothing reads afterwards (excluded from diagnostics).
+User provides iGarden app credentials. Integration fetches available courtyards, user selects one, and all devices in that courtyard become available. `scan_interval` is not part of setup: it lives in `entry.options`, edited by an `OptionsFlowWithReload` (needs HA 2025.8+; hence no update listener). Config entry minor version 1.3 moved it from `data` to `options` (`async_migrate_entry`); the coordinator still falls back to `data` if options are unset. Real-HA config flow tests are in `tests_ha/`. Note: the flow stores a device-list snapshot in `entry.data["devices"]` that nothing reads afterwards (excluded from diagnostics).
 
 ## Verifying Against Real Devices
 
