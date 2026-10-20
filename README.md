@@ -2,10 +2,13 @@
 
 [![HACS Badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/custom-components/hacs)
 [![GitHub Release](https://img.shields.io/github/release/siedi/ha-fairland.svg)](https://github.com/siedi/ha-fairland/releases)
+[![Quality Scale: Bronze](https://img.shields.io/badge/quality%20scale-bronze-cd7f32.svg)](custom_components/fairland/quality_scale.yaml)
 
 This integration enables monitoring and control of Fairland pool equipment in Home Assistant — heat pumps, pool pumps (Inverflow Plus and OEM-rebadged variants such as Madimack), salt chlorinators, multiport (sand-filter) valves and swim jets — connecting directly to Fairland's iGarden cloud API rather than using Tuya.
 
 ## Compatibility
+
+Requires Home Assistant **2025.8.0** or newer.
 
 > **Important:** This integration only works with Fairland devices that use the **iGarden app** (and its corresponding firmware/cloud). It is **not compatible** with the Fairland SmartPool app, which is Tuya-based and uses a completely different API.
 >
