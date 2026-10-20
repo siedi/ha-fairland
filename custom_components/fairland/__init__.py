@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, Platform
+from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.loader import async_get_loaded_integration
 
@@ -16,7 +17,6 @@ from homeassistant.loader import async_get_loaded_integration
 from .api import (
     FairlandApiClient,
     FairlandApiClientAuthenticationError,
-    FairlandApiClientCommunicationError,
     FairlandApiClientError,
 )
 from .const import CONF_API_REGION, DEFAULT_API_REGION, LOGGER
@@ -72,21 +72,25 @@ async def async_setup_entry(
         await apiClient.login()
     except FairlandApiClientAuthenticationError as ex:
         if CONF_API_REGION in config_entry.data:
-            LOGGER.exception("Failed to login: %s", ex)
-            return False
+            msg = "Login rejected, please re-authenticate"
+            raise ConfigEntryAuthFailed(msg) from ex
         try:
             region = await apiClient.detect_region()
-        except (FairlandApiClientCommunicationError, FairlandApiClientError) as ex2:
-            LOGGER.exception("Failed to login: %s", ex2)
-            return False
+        except FairlandApiClientAuthenticationError as ex2:
+            msg = "No regional server accepts these credentials"
+            raise ConfigEntryAuthFailed(msg) from ex2
+        except FairlandApiClientError as ex2:
+            msg = f"Could not detect the account region: {ex2}"
+            raise ConfigEntryNotReady(msg) from ex2
         LOGGER.info("Account found on regional server '%s', saving it", region)
         hass.config_entries.async_update_entry(
             config_entry,
             data={**config_entry.data, CONF_API_REGION: region},
         )
-    except (FairlandApiClientCommunicationError, FairlandApiClientError) as ex:
-        LOGGER.exception("Failed to login: %s", ex)
-        return False
+    except FairlandApiClientError as ex:
+        # Includes communication errors
+        msg = f"Could not log in to the Fairland cloud: {ex}"
+        raise ConfigEntryNotReady(msg) from ex
 
     # Fetch initial data so we have data when entities subscribe
     await coordinator.async_config_entry_first_refresh()

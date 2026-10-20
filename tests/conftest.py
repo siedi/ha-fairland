@@ -121,6 +121,11 @@ def _install_stubs() -> None:
         HVACAction=_AttrStr(),
         HVACMode=_AttrStr(),
     )
+    _register(
+        "homeassistant.exceptions",
+        ConfigEntryAuthFailed=type("ConfigEntryAuthFailed", (Exception,), {}),
+        ConfigEntryNotReady=type("ConfigEntryNotReady", (Exception,), {}),
+    )
     _register("homeassistant.core", HomeAssistant=object)
     _register("homeassistant.util", slugify=_slugify)
     _register(
